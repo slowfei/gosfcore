@@ -62,12 +62,13 @@ func RandBits(b []byte) {
 
 //	基于rand.Reader生成随机数字符串
 //	指定字符串：ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
-func RandString(n int) string {
+//	@n length
+func RandString(length int) string {
 	const b62 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-	if n < 1 {
-		n = 16 // 默认长度
+	if length < 1 {
+		length = 16 // 默认长度
 	}
-	bytes := make([]byte, n)
+	bytes := make([]byte, length)
 	if _, err := rand.Read(bytes); nil != err {
 		panic(err.Error())
 	}
@@ -80,6 +81,8 @@ func RandString(n int) string {
 
 //	基于rand.Reader使用特定字符串生成随机数字符串
 //	string len 最高支持255
+//	@n length
+//	@s seed string
 func RandByString(n int, s string) string {
 	if n < 1 {
 		n = 16 // 默认长度
@@ -101,5 +104,36 @@ func RandByString(n int, s string) string {
 	}
 
 	return string(bytes)
+
+}
+
+//	随机排序[]int64
+type RandSortInt64 struct {
+	sort    []int64
+	seed    []byte
+	seedLen int
+}
+
+//	new RandSortInt64
+//
+//	@sort	sort data
+//	@seed	rand seed
+//	@return
+func NewRandSortInt64(sort []int64, seed []byte) *RandSortInt64 {
+	return &RandSortInt64{sort, seed, len(seed)}
+}
+
+//	排序sort.Interface实现规则
+func (rs *RandSortInt64) Len() int { return len(rs.sort) }
+func (rs *RandSortInt64) Less(i, j int) bool {
+	if rs.seedLen < i+1 || rs.seedLen < j+1 {
+		return i < j
+	} else {
+		return rs.seed[i] < rs.seed[j]
+	}
+
+}
+func (rs *RandSortInt64) Swap(i, j int) {
+	rs.sort[i], rs.sort[j] = rs.sort[j], rs.sort[i]
 
 }
