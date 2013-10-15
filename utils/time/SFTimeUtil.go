@@ -1,3 +1,12 @@
+//	Copyright 2013 slowfei And The Contributors All rights reserved.
+//
+//	Software Source Code License Agreement (BSD License)
+
+//	time 辅助工具
+//
+//	email		slowfei@foxmail.com
+//	createTime 	2013-10-14
+//	updateTime	2013-10-15
 package SFTimeUtil
 
 import (
