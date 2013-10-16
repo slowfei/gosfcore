@@ -1,12 +1,15 @@
 //	Copyright 2013 slowfei And The Contributors All rights reserved.
 //
 //	Software Source Code License Agreement (BSD License)
+//
+//  Create on 2013-8-25
+//  Update on 2013-10-17
+//  Email  slowfei@foxmail.com
+//  Home   http://www.slowfei.com
 
+//
 //	json 组件封装，基于encoding/json
 //
-//	email		slowfei@foxmail.com
-//	createTime 	2013-8-25
-//	updateTime	2013-10-1
 package SFJson
 
 import (

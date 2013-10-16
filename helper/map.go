@@ -1,12 +1,14 @@
 //	Copyright 2013 slowfei And The Contributors All rights reserved.
 //
 //	Software Source Code License Agreement (BSD License)
-
-//	sync mutex map
 //
-//	email	slowfei@foxmail.com
-//	createTime 	2013-8-24
-//	updateTime	2013-10-1
+//  Create on 2013-8-24
+//  Update on 2013-10-17
+//  Email  slowfei@foxmail.com
+//  Home   http://www.slowfei.com
+
+//
+//	sync mutex map
 //
 package SFHelper
 

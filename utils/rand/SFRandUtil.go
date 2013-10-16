@@ -1,12 +1,14 @@
 //	Copyright 2013 slowfei And The Contributors All rights reserved.
 //
 //	Software Source Code License Agreement (BSD License)
-
-//	rand utils
 //
-//	email	slowfei@foxmail.com
-//	createTime 	2013-9-26
-//	updateTime	2013-10-3
+//  Create on 2013-9-26
+//  Update on 2013-10-17
+//  Email  slowfei@foxmail.com
+//  Home   http://www.slowfei.com
+
+//
+//	rand utils
 //
 package SFRandUtil
 
