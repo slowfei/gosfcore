@@ -32,27 +32,27 @@ func NewLogger(logTag string) *SFLogger {
 
 //	logger info log
 func (l *SFLogger) Info(format string, v ...interface{}) string {
-
+	return ""
 }
 
 //	logger debug log
 func (l *SFLogger) Debug(format string, v ...interface{}) string {
-
+	return ""
 }
 
 //	logger error log
 func (l *SFLogger) Error(format string, v ...interface{}) string {
-
+	return ""
 }
 
 //	logger warn log
 func (l *SFLogger) Warn(format string, v ...interface{}) string {
-
+	return ""
 }
 
 //	logger fatal log
 func (l *SFLogger) Fatal(format string, v ...interface{}) string {
-
+	return ""
 }
 
 //	logger panic log
@@ -60,6 +60,7 @@ func (l *SFLogger) Panic(isPanic bool, format string, v ...interface{}) string {
 	if isPanic {
 		panic("")
 	}
+	return ""
 }
 
 var logger *log.Logger = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile|log.LstdFlags)
