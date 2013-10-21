@@ -1,6 +1,10 @@
 gosfcore update log
 =============
 
+#### 2013-10-21
+1.(新)github.com/slowfei/gosfcore/log/SFLog.go
+> 正在编写日志操作，未完成
+
 #### 2013-10-14
 1.(新)github.com/slowfei/gosfcore/utils/time/SFTimeUtil.go
 > * yyyyMMddhhmmssSSS格式的时间对象格式化字符串

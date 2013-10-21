@@ -3,12 +3,12 @@
 //	Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-8-24
-//  Update on 2013-10-16
+//  Update on 2013-10-17
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
 //	日志操作，类似java的log4j
-//	info debug error warn ftal level
+//	info debug error warn ftal panic level
 //	out file html mongodb email
 package SFLog
 
@@ -16,6 +16,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
+)
+
+var (
+	//
+	_thisLogManager *LogManager = nil
 )
 
 //	logger 产生日志的输出，主要负责标识每个不同的日志对象
@@ -23,7 +29,7 @@ type SFLogger struct {
 	logTag string
 }
 
-//	new SFLogger
+//	New SFLogger
 //	@logTag		输出日志对象的标识，最好是唯一的
 //	@return
 func NewLogger(logTag string) *SFLogger {
@@ -98,4 +104,24 @@ func Fatal(format string, v ...interface{}) string {
 	msg := fmt.Sprintf(format, v...)
 	logger.Output(2, msg)
 	return msg
+}
+
+type LogMsg struct {
+	target LogTarget
+	msg    string
+}
+
+// log manager
+type LogManager struct {
+	rwm       sync.RWMutex
+	develMode bool
+	msg       chan *LogMsg
+}
+
+//	shared log manager
+func SharedLogManager(pathFile string) *LogManager {
+	if nil == _thisLogManager {
+		_thisLogManager = new(LogManager)
+	}
+	return _thisLogManager
 }
