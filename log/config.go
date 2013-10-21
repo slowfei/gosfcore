@@ -15,6 +15,7 @@ package SFLog
 
 import (
 	"encoding/json"
+	"github.com/slowfei/gosfcore/utils/filemanager"
 )
 
 const (
@@ -64,7 +65,7 @@ var (
 							"console"
 					],
 					"info":{
-							"ConsolePattern":"%s",
+							"ConsolePattern":"yyyy-MM-dd",
 							"none":true
 					},
 					"debug":{
@@ -96,19 +97,33 @@ func init() {
 	_sharedLogConfig = new(MainLogConfig)
 	// _sharedLogConfig.ChannelSize = DEFAULT_CHANNEL_BUFFER_SIZE
 	_sharedLogConfig.LogTags = make(map[string]LogTagConfig)
+
+	//	初始化的时候加载一次默认的配置
+	if err := json.Unmarshal([]byte(_defaultConfig), _sharedLogConfig); nil != err {
+		panic(err)
+	}
 }
 
 //	reset load config
-func LoadConfig(pathFile string) error {
-	var err error = nil
-	if 0 == len(pathFile) {
-		err = json.Unmarshal([]byte(_defaultConfig), _sharedLogConfig)
+//	@filePath	相对或绝对路径
+func LoadConfig(filePath string) error {
+
+	if 0 != len(filePath) {
+
+		jsonData, e1 := SFFileManager.ReadFileAll(filePath)
+		if nil != e1 {
+			return e1
+		}
+
+		e2 := json.Unmarshal(jsonData, _sharedLogConfig)
+
+		if nil != e2 {
+			return e2
+		}
+
 	}
 
-	if nil != err {
-		return err
-	}
-	return err
+	return nil
 }
 
 //	main log config

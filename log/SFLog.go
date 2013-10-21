@@ -22,6 +22,11 @@ import (
 var (
 	//
 	_thisLogManager *LogManager = nil
+
+	//	global logger
+	_globalLogger *SFLogger = NewLogger(KEY_GLOBAL_LOG_TAG_CONFIG)
+
+	logger *log.Logger = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile|log.LstdFlags)
 )
 
 //	logger 产生日志的输出，主要负责标识每个不同的日志对象
@@ -38,6 +43,12 @@ func NewLogger(logTag string) *SFLogger {
 
 //	logger info log
 func (l *SFLogger) Info(format string, v ...interface{}) string {
+	if nil == _thisLogManager {
+		msg := fmt.Sprintf("[LogManager == nil]"+format, v...)
+		logger.Output(2, msg)
+		return msg
+	}
+
 	return ""
 }
 
@@ -62,48 +73,41 @@ func (l *SFLogger) Fatal(format string, v ...interface{}) string {
 }
 
 //	logger panic log
-func (l *SFLogger) Panic(isPanic bool, format string, v ...interface{}) string {
-	if isPanic {
-		panic("")
-	}
+func (l *SFLogger) Panic(format string, v ...interface{}) string {
 	return ""
 }
 
-var logger *log.Logger = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile|log.LstdFlags)
-
 //	info log
 func Info(format string, v ...interface{}) string {
-	msg := fmt.Sprintf(format, v...)
-	logger.Output(2, msg)
-	return msg
+	// msg := fmt.Sprintf(format, v...)
+	// logger.Output(2, msg)
+	return _globalLogger.Info(format, v...)
+
 }
 
 //	debug log
 func Debug(format string, v ...interface{}) string {
-	msg := fmt.Sprintf(format, v...)
-	logger.Output(2, msg)
-	return msg
+
+	return _globalLogger.Debug(format, v...)
 }
 
 //	error log
 func Error(format string, v ...interface{}) string {
-	msg := fmt.Sprintf(format, v...)
-	logger.Output(2, msg)
-	return msg
+	return _globalLogger.Error(format, v...)
 }
 
 //	warn log
 func Warn(format string, v ...interface{}) string {
-	msg := fmt.Sprintf(format, v...)
-	logger.Output(2, msg)
-	return msg
+	return _globalLogger.Warn(format, v...)
 }
 
 //	fatal log
 func Fatal(format string, v ...interface{}) string {
-	msg := fmt.Sprintf(format, v...)
-	logger.Output(2, msg)
-	return msg
+	return _globalLogger.Fatal(format, v...)
+}
+
+func Panic(format string, v ...interface{}) string {
+	return _globalLogger.Panic(format, v...)
 }
 
 type LogMsg struct {
@@ -119,9 +123,17 @@ type LogManager struct {
 }
 
 //	shared log manager
-func SharedLogManager(pathFile string) *LogManager {
+//	@filePath	相对或绝对路径, ""为使用默认配置
+func SharedLogManager(filePath string) (*LogManager, error) {
 	if nil == _thisLogManager {
+
 		_thisLogManager = new(LogManager)
+
+		err := LoadConfig(filePath)
+
+		if nil != err {
+			return nil, err
+		}
 	}
-	return _thisLogManager
+	return _thisLogManager, nil
 }

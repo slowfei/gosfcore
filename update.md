@@ -1,6 +1,10 @@
 gosfcore update log
 =============
 
+#### 2013-10-22
+1.github.com/slowfei/gosfcore/utils/filemanager/SFFileManager.go
+> * 增加ReadFileAll(path string)读取文件函数
+
 #### 2013-10-21
 1.(新)github.com/slowfei/gosfcore/log/SFLog.go
 > 正在编写日志操作，未完成
