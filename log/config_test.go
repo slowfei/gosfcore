@@ -6,14 +6,16 @@ import (
 )
 
 //	测试加载配置文件
-func TestLoadConfig(t *testing.T) {
+func testLoadConfig(t *testing.T) {
 	err := LoadConfig("")
 	if nil != err {
 		fmt.Println(err)
 		fmt.Println(_defaultConfig)
 	} else {
 		fmt.Println(_sharedLogConfig.ChannelSize)
-		fmt.Println(_sharedLogConfig.LogTags["global_log_config"].Info)
+		fmt.Println(_sharedLogConfig.LogGroups[KEY_GLOBAL_GROUP_LOG_CONFIG].AppenderConsoleConfig)
+		fmt.Println(_sharedLogConfig.LogGroups[KEY_GLOBAL_GROUP_LOG_CONFIG].Info.AppenderConsoleConfig)
+		fmt.Println(_sharedLogConfig.LogGroups[KEY_GLOBAL_GROUP_LOG_CONFIG].Info.AppenderNoneConfig)
+		fmt.Println(_sharedLogConfig.LogGroups[KEY_GLOBAL_GROUP_LOG_CONFIG].Debug)
 	}
-
 }

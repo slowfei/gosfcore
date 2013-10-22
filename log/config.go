@@ -3,7 +3,7 @@
 //	Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-10-17
-//  Update on 2013-10-17
+//  Update on 2013-10-22
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -21,8 +21,8 @@ import (
 const (
 	//	separator
 	LOG_SEPARATOR = "_"
-	//	global log config
-	KEY_GLOBAL_LOG_TAG_CONFIG = "global_log_config"
+	//	global group log config
+	KEY_GLOBAL_GROUP_LOG_CONFIG = "globalGroup"
 	//	default channel buffer size
 	DEFAULT_CHANNEL_BUFFER_SIZE = "3000"
 
@@ -58,15 +58,25 @@ var (
 	//	默认配置的json
 	_defaultConfig = `
 		{
+			"InitAppenders":[
+				"console","file"
+			],
 			"ChannelSize" : ` + DEFAULT_CHANNEL_BUFFER_SIZE + `,
-			"LogTags" :{
-				"` + KEY_GLOBAL_LOG_TAG_CONFIG + `" :{
+			"LogGroups" :{
+				"` + KEY_GLOBAL_GROUP_LOG_CONFIG + `" :{
+
 					"Appender":[
-							"console"
+						"console"
 					],
+					"none":true,
+					"ConsolePattern":"yyyy-MM-dd mm:dd:ss ${GLOBAL}",
+
 					"info":{
-							"ConsolePattern":"yyyy-MM-dd",
-							"none":true
+							"Appender":[
+								"console"
+							],
+							"none":false,
+							"ConsolePattern":"yyyy-MM-dd mm:dd:ss ${MSG}"
 					},
 					"debug":{
 							"none":true
@@ -79,7 +89,7 @@ var (
 					},
 					"fatal":{
 							"none":true
-						},
+					},
 					"panic":{
 							"none":true
 					}
@@ -96,7 +106,7 @@ var (
 func init() {
 	_sharedLogConfig = new(MainLogConfig)
 	// _sharedLogConfig.ChannelSize = DEFAULT_CHANNEL_BUFFER_SIZE
-	_sharedLogConfig.LogTags = make(map[string]LogTagConfig)
+	_sharedLogConfig.LogGroups = make(map[string]LogConfig)
 
 	//	初始化的时候加载一次默认的配置
 	if err := json.Unmarshal([]byte(_defaultConfig), _sharedLogConfig); nil != err {
@@ -107,7 +117,6 @@ func init() {
 //	reset load config
 //	@filePath	相对或绝对路径
 func LoadConfig(filePath string) error {
-
 	if 0 != len(filePath) {
 
 		jsonData, e1 := SFFileManager.ReadFileAll(filePath)
@@ -122,97 +131,64 @@ func LoadConfig(filePath string) error {
 		}
 
 	}
+	return nil
+}
+
+//	reset load config
+//	@jsonDataq
+func LoadConfigByJson(jsonData []byte) error {
+
+	e2 := json.Unmarshal(jsonData, _sharedLogConfig)
+
+	if nil != e2 {
+		return e2
+	}
 
 	return nil
 }
 
 //	main log config
 type MainLogConfig struct {
-	ChannelSize int                     // 通道缓冲区大小
-	LogTags     map[string]LogTagConfig // log tags日志标识集合元素
+	ChannelSize   int                  // 通道缓冲区大小
+	InitAppenders []string             // init appenders impl. console, file...
+	LogGroups     map[string]LogConfig // log tags日志标识集合元素
 }
 
-//	log tag config
-type LogTagConfig struct {
-	Appender []string
-	Info     *ConfigInfo `json:"info"`
-	Debug    *ConfigDebug
-	Error    *ConfigError
-	Warn     *ConfigWarn
-	Fatal    *ConfigFatal
-	Panic    *ConfigPanic
+//	log config
+type LogConfig struct {
+	//	target appender
+	Info  *TargetConfigInfo `json:"info"`
+	Debug *TargetConfigInfo `json:"debug"`
+	Error *TargetConfigInfo `json:"error"`
+	Warn  *TargetConfigInfo `json:"warn"`
+	Fatal *TargetConfigInfo `json:"fatal"`
+	Panic *TargetConfigInfo `json:"panic"`
+
+	//	global appender
+	*TargetConfigInfo
 }
 
-//	log target, info、Debug、Error、Warn、Fatal、Panic
+//	log target, info,debug,error,warn,fatal,panics
 type LogTarget string
 
-//	info config
-type ConfigInfo struct {
-	*AppenderFile
-	*AppenderConsole
-	*AppenderMongodb
-	*AppenderEmail
-	*AppenderHtml
-	AppenderNone
-}
-
-//	debug config
-type ConfigDebug struct {
-	*AppenderFile
-	*AppenderConsole
-	*AppenderMongodb
-	*AppenderEmail
-	*AppenderHtml
-	AppenderNone
-}
-
-//	error config
-type ConfigError struct {
-	*AppenderFile
-	*AppenderConsole
-	*AppenderMongodb
-	*AppenderEmail
-	*AppenderHtml
-	AppenderNone
-}
-
-//	warn config
-type ConfigWarn struct {
-	*AppenderFile
-	*AppenderConsole
-	*AppenderMongodb
-	*AppenderEmail
-	*AppenderHtml
-	AppenderNone
-}
-
-//	fatal config
-type ConfigFatal struct {
-	*AppenderFile
-	*AppenderConsole
-	*AppenderMongodb
-	*AppenderEmail
-	*AppenderHtml
-	AppenderNone
-}
-
-//	panic config
-type ConfigPanic struct {
-	*AppenderFile
-	*AppenderConsole
-	*AppenderMongodb
-	*AppenderEmail
-	*AppenderHtml
-	AppenderNone
+//	target config info,contain info,debug,error,warn,fatal,panics
+type TargetConfigInfo struct {
+	Appender []string
+	*AppenderFileConfig
+	*AppenderConsoleConfig
+	*AppenderMongodbConfig
+	*AppenderEmailConfig
+	*AppenderHtmlConfig
+	AppenderNoneConfig
 }
 
 //	appender console
-type AppenderConsole struct {
+type AppenderConsoleConfig struct {
 	Pattern string `json:"ConsolePattern"` // 信息内容输出格式
 }
 
 //	appender file
-type AppenderFile struct {
+type AppenderFileConfig struct {
 	MaxSize int64  `json:"FileMaxSize"` // 文件大小 byte
 	Path    string `json:"FilePath"`    // 文件存储路径
 	Name    string `json:"FileName"`    // 文件名(可以输入时间格式) file.log-{yyyy-MM-dd}
@@ -220,18 +196,18 @@ type AppenderFile struct {
 }
 
 //	appender mongodb
-type AppenderMongodb struct {
+type AppenderMongodbConfig struct {
 }
 
 //	appender email
-type AppenderEmail struct {
+type AppenderEmailConfig struct {
 }
 
 //	appender html
-type AppenderHtml struct {
+type AppenderHtmlConfig struct {
 }
 
 //	appender none
-type AppenderNone struct {
+type AppenderNoneConfig struct {
 	None bool
 }
