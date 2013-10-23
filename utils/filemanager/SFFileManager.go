@@ -13,8 +13,6 @@
 package SFFileManager
 
 import (
-	"errors"
-	"io/ioutil"
 	"os"
 	"path"
 )
@@ -43,29 +41,4 @@ func Exists(path string, isDir *bool) (bool, error) {
 		return false, nil
 	}
 	return false, err
-}
-
-//	读取文件所有信息
-//
-//	@path	操作路径
-//	@return  read data, error
-func ReadFileAll(path string) ([]byte, error) {
-
-	var isDir bool
-	if b, _ := Exists(path, &isDir); !b || isDir {
-		return nil, errors.New("file does not exist or can not be operated path: " + path)
-	}
-
-	file, e1 := os.Open(path)
-	if nil != e1 {
-		return nil, e1
-	}
-	defer file.Close()
-
-	data, e2 := ioutil.ReadAll(file)
-	if nil != e2 {
-		return nil, e2
-	}
-
-	return data, nil
 }

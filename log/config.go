@@ -15,7 +15,7 @@ package SFLog
 
 import (
 	"encoding/json"
-	"github.com/slowfei/gosfcore/utils/filemanager"
+	"io/ioutil"
 )
 
 const (
@@ -59,7 +59,7 @@ var (
 	_defaultConfig = `
 		{
 			"InitAppenders":[
-				"console","file"
+				"console"
 			],
 			"ChannelSize" : ` + DEFAULT_CHANNEL_BUFFER_SIZE + `,
 			"LogGroups" :{
@@ -69,30 +69,7 @@ var (
 						"console"
 					],
 					"none":true,
-					"ConsolePattern":"yyyy-MM-dd mm:dd:ss ${GLOBAL}",
-
-					"info":{
-							"Appender":[
-								"console"
-							],
-							"none":false,
-							"ConsolePattern":"yyyy-MM-dd mm:dd:ss ${MSG}"
-					},
-					"debug":{
-							"none":true
-					},
-					"error":{
-							"none":true
-					},
-					"warn":{
-							"none":true
-					},
-					"fatal":{
-							"none":true
-					},
-					"panic":{
-							"none":true
-					}
+					"ConsolePattern":"${yyyy}-${MM}-${dd} ${mm}:${dd}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}"
 				}
 			}
 		}
@@ -119,7 +96,7 @@ func init() {
 func LoadConfig(filePath string) error {
 	if 0 != len(filePath) {
 
-		jsonData, e1 := SFFileManager.ReadFileAll(filePath)
+		jsonData, e1 := ioutil.ReadFile(filePath)
 		if nil != e1 {
 			return e1
 		}
@@ -151,6 +128,7 @@ func LoadConfigByJson(jsonData []byte) error {
 type MainLogConfig struct {
 	ChannelSize   int                  // 通道缓冲区大小
 	InitAppenders []string             // init appenders impl. console, file...
+	TimeFormat    string               // time format
 	LogGroups     map[string]LogConfig // log tags日志标识集合元素
 }
 
@@ -180,11 +158,6 @@ type TargetConfigInfo struct {
 	*AppenderEmailConfig
 	*AppenderHtmlConfig
 	AppenderNoneConfig
-}
-
-//	appender console
-type AppenderConsoleConfig struct {
-	Pattern string `json:"ConsolePattern"` // 信息内容输出格式
 }
 
 //	appender file

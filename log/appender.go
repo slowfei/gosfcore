@@ -16,4 +16,7 @@ type Appender interface {
 	//	@msg		 写入的信息
 	//	@configInfo  配置信息
 	Write(msg *LogMsg, configInfo *TargetConfigInfo)
+
+	// 实现接口的名称
+	Name() string
 }

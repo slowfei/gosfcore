@@ -3,7 +3,7 @@
 //	Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-8-24
-//  Update on 2013-10-22
+//  Update on 2013-10-23
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -13,9 +13,11 @@
 package SFLog
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/slowfei/gosfcore/utils/time"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -26,7 +28,7 @@ var (
 	_thisLogManager *LogManager = nil
 
 	//	global logger
-	_globalLogger *SFLogger = NewLogger(KEY_GLOBAL_GROUP_LOG_CONFIG)
+	_globalLogger *SFLogger = NewLogger("globalTag")
 
 	//	appender impl struct
 	_implAppenderConsole Appender = nil
@@ -127,18 +129,37 @@ func loggerHandle(log *SFLogger, target LogTarget, format string, v ...interface
 
 	msgString = fmt.Sprintf(format, v...)
 
-	pc, file, line, ok := runtime.Caller(1)
-	if !ok {
-		file = "???"
-		line = 0
+	fileLine := -1
+	funcName := "???"
+
+	stackBuf := new(bytes.Buffer)
+	for i := 2; ; i++ {
+		pc, file, line, ok := runtime.Caller(i)
+		if !ok {
+			break
+		}
+		fn := runtime.FuncForPC(pc).Name()
+		if i == 2 {
+			fileLine = line
+			funcName = fn
+		}
+		if 0 != len(file) {
+			//	L1223: runtime.goexit(...) (0x173d0)
+			fmt.Fprintf(stackBuf, "%s(...)\n%s:%d (0x%x)\n", fn, file, line, pc)
+		} else {
+			// 	runtime.goexit(...)
+			// /usr/local/go/src/pkg/runtime/proc.c:1223 (0x173d0)
+			fmt.Fprintf(stackBuf, "L%d: %s(...) (0x%x)\n", line, fn, pc)
+		}
 	}
-	stack := fmt.Sprintf("%s:%d (0x%x)\n", file, line, pc)
 
 	logmsg := &LogMsg{}
 	logmsg.logGroup = log.logGroup
 	logmsg.logTag = log.logTag
 	logmsg.dateTime = time.Now()
-	logmsg.stack = stack
+	logmsg.stack = stackBuf.String()
+	logmsg.fileLine = fileLine
+	logmsg.funcName = funcName
 	logmsg.msg = msgString
 	logmsg.target = target
 
@@ -154,21 +175,25 @@ type LogMsg struct {
 	target   LogTarget // info,debug,error...
 	dateTime time.Time // create time
 	stack    string    // stack info
+	fileLine int       // go file line
+	funcName string    // msg trigger func name
 	msg      string    // log message
 }
 
 //	格式化日志信息
 func logMagFormat(format string, msg *LogMsg) string {
-	//	TODO 由于在格式化时间的时候，将信息标识给覆盖格式化了，目前想不到好的方法。
 
 	//	格式化时间
-	format = SFTimeUtil.YMDHMSSFormat(msg.dateTime, format)
+	format = SFTimeUtil.YMDHMSSSignFormat(msg.dateTime, format)
 
 	//	日志的格式化信息，别随意更换顺序，因为根据设计来进行日志信息的格式化操作
 	logFormat := []string{
 		"${LOG_GROUP}", msg.logGroup,
 		"${LOG_TAG}", msg.logTag,
+		"${FILE_LINE}", strconv.Itoa(msg.fileLine),
+		"${FUNC_NAME}", msg.funcName,
 		"${STACK}", msg.stack,
+		"${TARGET}", string(msg.target),
 		"${MSG}", msg.msg,
 	}
 

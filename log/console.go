@@ -14,6 +14,11 @@ import (
 	"fmt"
 )
 
+//	appender console config
+type AppenderConsoleConfig struct {
+	Pattern string `json:"ConsolePattern"` // 信息内容输出格式
+}
+
 // Appender impl console write
 type AppenderConsole struct {
 }
@@ -26,4 +31,9 @@ func NewAppenderConsole() *AppenderConsole {
 //	控制台信息写入
 func (ac *AppenderConsole) Write(msg *LogMsg, configInfo *TargetConfigInfo) {
 	fmt.Println(logMagFormat(configInfo.AppenderConsoleConfig.Pattern, msg))
+}
+
+//	name = console
+func (ac *AppenderConsole) Name() string {
+	return VAL_APPENDER_CONSOLE
 }
