@@ -12,6 +12,11 @@ package SFLog
 
 import (
 	"fmt"
+	"github.com/slowfei/gosfcore/utils/filemanager"
+)
+
+const (
+	DEFAULT_FILE_MAX_SIZE = 5 << 20 // default 5M file max size
 )
 
 //	appender file
@@ -24,11 +29,19 @@ type AppenderFileConfig struct {
 
 // Appender impl console write
 type AppenderFile struct {
+	buildFilePath   string
+	defaultFileName string
 }
 
 //	new console impl
 func NewAppenderFile() *AppenderFile {
-	return &AppenderFile{}
+	af := &AppenderFile{}
+
+	af.buildFilePath = SFFileManager.GetExceDir()
+	//	默认存储文件以天来存储
+	af.defaultFileName = SFFileManager.GetExceFileName() + "_${yyyy}-${MM}-${dd}.log"
+
+	return af
 }
 
 //	#interface impl

@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	kConsoleDefaultPattern = `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}`
+	DEFAULT_CONSOLE_PATTERN = `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}`
 )
 
 //	appender console config
@@ -42,11 +42,11 @@ func (ac *AppenderConsole) Write(msg *LogMsg, configInfo interface{}) {
 	var pattern string
 
 	if nil == configInfo {
-		pattern = kConsoleDefaultPattern
+		pattern = DEFAULT_CONSOLE_PATTERN
 	} else {
 		if consoleConfig, ok := configInfo.(*AppenderConsoleConfig); ok {
 			if 0 == len(consoleConfig.Pattern) {
-				pattern = kConsoleDefaultPattern
+				pattern = DEFAULT_CONSOLE_PATTERN
 			} else {
 				pattern = consoleConfig.Pattern
 			}
