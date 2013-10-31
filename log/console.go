@@ -14,6 +14,10 @@ import (
 	"fmt"
 )
 
+const (
+	kConsoleDefaultPattern = `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}`
+)
+
 //	appender console config
 type AppenderConsoleConfig struct {
 	Pattern string `json:"ConsolePattern"` // 信息内容输出格式
@@ -28,9 +32,31 @@ func NewAppenderConsole() *AppenderConsole {
 	return &AppenderConsole{}
 }
 
+//	#interface impl
 //	控制台信息写入
-func (ac *AppenderConsole) Write(msg *LogMsg, configInfo *TargetConfigInfo) {
-	fmt.Println(logMagFormat(configInfo.AppenderConsoleConfig.Pattern, msg))
+func (ac *AppenderConsole) Write(msg *LogMsg, configInfo interface{}) {
+	if nil == msg {
+		return
+	}
+
+	var pattern string
+
+	if nil == configInfo {
+		pattern = kConsoleDefaultPattern
+	} else {
+		if consoleConfig, ok := configInfo.(*AppenderConsoleConfig); ok {
+			if 0 == len(consoleConfig.Pattern) {
+				pattern = kConsoleDefaultPattern
+			} else {
+				pattern = consoleConfig.Pattern
+			}
+		}
+	}
+
+	if 0 != len(pattern) {
+		fmt.Println(logMagFormat(pattern, msg))
+	}
+
 }
 
 //	name = console

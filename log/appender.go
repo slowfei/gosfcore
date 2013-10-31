@@ -14,8 +14,8 @@ package SFLog
 type Appender interface {
 	//	写入信息
 	//	@msg		 写入的信息
-	//	@configInfo  配置信息
-	Write(msg *LogMsg, configInfo *TargetConfigInfo)
+	//	@configInfo  实现对象的配置信息例如 AppenderConsoleConfig struct{}
+	Write(msg *LogMsg, configInfo interface{})
 
 	// 实现接口的名称
 	Name() string

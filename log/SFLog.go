@@ -3,13 +3,120 @@
 //	Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-8-24
-//  Update on 2013-10-23
+//  Update on 2013-10-31
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
 //	日志操作，类似java的log4j
 //	info debug error warn ftal panic level
 //	out console file html mongodb email
+//
+//	使用说明：
+//		SFLogger struct{}，首先先要了解什么是(SFLogger)，是用于标识区分每个log信息的输出，
+//		可以自定义分组标识和log标识。
+//
+//		日志标识(logTag)：
+//			主要作用区分每个不同的SFLogger对象进行输出的信息，最好是唯一的
+//		日志组标识(logGroup)：
+//			主要作用是用于日志配置的使用，在一个日志分组中使用同样的配置操作。
+//
+//		如果可以直接使用全局的日志配置操作，全局日志的配置默认是输出控制台。
+//		全局SFLogger的标识：logTag = "globalTag"，logGroup ＝ globalGroup
+//
+//			SFLog.Info("操作信息：记录信息操作。")
+//
+//			console out:
+//			2013-10-31 12:12:55.871435 [info] ([globalGroup][globalTag][L16 github.com/slowfei/gosfcore/log.TestLogger])
+//			操作信息：记录信息操作。
+//
+//		也可以自定义一个日志标识然后结合日志的配置进行信息的输出，如果没有定义日志组，默认使用全局日志组的配置。
+//			var log *SFLogger = NewLogger("logtag") or NewLogger("logtag","logGroup")
+//
+//			log.Info("操作信息：记录信息操作。")
+//
+//			信息会根据日志组的设置进行相应的输出。
+//
+//	配置详解：
+//	Pattern Format(信息输出时的格式化操作)：
+//		${yyyy}			年
+//		${MM}			月
+//		${dd}			日
+//		${hh}			时
+//		${mm}			分
+//		${ss}			秒
+//		${SSS}			毫秒
+//		${LOG_GROUP}	分组标识
+//		${LOG_TAG}		日志标识
+//		${FILE_LINE}	调用函数的文件行
+//		${FILE_PATH}	调用函数的文件路径
+//		${FUNC_NAME}	函数名称(哪里调用就是那个函数)
+//		${STACK}		堆栈信息
+//		${TARGET}		输出的目标例如 info、debug、error...
+//		${MSG}			输出的信息，就是 SFLog.Info("这里是输出${MSG}的信息")
+//
+//	配置文件(千万要注意编写json的格式)
+// {
+//		//	初始化需要实现的的Appender对象，如果未初始化则不会进行输出，所以在开始前需要确定需要输出的对象。
+// 		"InitAppenders":[
+// 			"console","file","email","html","mongodb"
+// 		],
+//
+//		//	设置channel 的缓冲大小
+// 		"ChannelSize" : "3000",
+//
+//		//	日志组的配置，包含多个日志组的配置信息
+// 		"LogGroups" :{
+//
+//			//	配置一个日志组
+// 			"groupName" :{
+//
+//					//	设置需要的Appender对象，如果未配置将不会进行输出
+// 					"Appender":[
+// 						"console","file"
+// 					],
+//
+//					//	下面针对Appender对象配置特定的格式信息，如果nil或没有设置则使用Appender的默认设置
+//
+//					/* console配置	*/
+//
+//					//	控制台输出的格式，具体可以查看Pattern Format
+// 					"ConsolePattern":"${yyyy}-${MM}-${dd} ${mm}:${dd}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}",
+//
+//					/* file配置	*/
+//
+//
+//					//	控制当前日志组是否进行输出工作，如果为true则当前组不会进行信息的输出，默认可以不写为false
+//					"none":false,
+//
+//					//	以上的分组配置均为默认配置
+//
+//					//	针对输出的目标进行配置，如果不编写则使用上面部分设置的默认配置信息。
+//					//	需要注意的是，只要声明了目标的配置就不会取组的默认配置信息，目标配置大于默认配置。
+//					"info":{
+//						"Appender":[
+// 							"console"
+// 						],
+//						"ConsolePattern":"${yyyy}-${MM}-${dd} ${mm}:${dd} ${MSG}",
+//					},
+//					"debug":{
+//						//	配置与info都一致，想使用默认的可以不编写，不过需要去除，这样声明算是空是不会获取默认配置的。
+//					},
+//					"error":{
+//						//	配置与info都一致。
+//					},
+//					"warn":{
+//						//	配置与info都一致。
+//					},
+//					"fatal":{
+//						//	配置与info都一致。
+//					},
+//					"panic":{
+//						//	配置与info都一致。
+//					}
+// 				}
+// 			}
+// 	}
+//
 package SFLog
 
 import (
@@ -31,14 +138,16 @@ var (
 	_globalLogger *SFLogger = NewLogger("globalTag")
 
 	//	appender impl struct
-	_implAppenderConsole Appender = nil
-	_implAppenderFile    Appender = nil
-	_implAppenderHtml    Appender = nil
-	_implAppenderEmail   Appender = nil
-	_implAppenderMongodb Appender = nil
+	ImplAppenderConsole Appender = nil
+	ImplAppenderFile    Appender = nil
+	ImplAppenderHtml    Appender = nil
+	ImplAppenderEmail   Appender = nil
+	ImplAppenderMongodb Appender = nil
 )
 
-//	logger 产生日志的输出，主要负责标识每个不同的日志对象
+//	logger 产生日志的输出，主要负责标识每个不同的日志对象，
+//	使用分组标识和日志标识进行标识处理。
+//	然后可调用(Info、Debug、Error)函数进行信息输出
 type SFLogger struct {
 	logGroup string
 	logTag   string
@@ -54,7 +163,7 @@ func NewLogger(logTag string) *SFLogger {
 }
 
 // @logGroup log group
-func NewLoggerByGroup(logGroup, logTag string) *SFLogger {
+func NewLoggerByGroup(logTag, logGroup string) *SFLogger {
 	return &SFLogger{logGroup, logTag}
 }
 
@@ -88,32 +197,32 @@ func (l *SFLogger) Panic(format string, v ...interface{}) string {
 	return loggerHandle(l, TargetPanic, format, v...)
 }
 
-//	info log
+//	global info log
 func Info(format string, v ...interface{}) string {
 	return loggerHandle(_globalLogger, TargetInfo, format, v...)
 }
 
-//	debug log
+//	global debug log
 func Debug(format string, v ...interface{}) string {
 	return loggerHandle(_globalLogger, TargetDebug, format, v...)
 }
 
-//	error log
+//	global error log
 func Error(format string, v ...interface{}) string {
 	return loggerHandle(_globalLogger, TargetError, format, v...)
 }
 
-//	warn log
+//	global warn log
 func Warn(format string, v ...interface{}) string {
 	return loggerHandle(_globalLogger, TargetWarn, format, v...)
 }
 
-//	fatal log
+//	global fatal log
 func Fatal(format string, v ...interface{}) string {
 	return loggerHandle(_globalLogger, TargetFatal, format, v...)
 }
 
-//	panic log
+//	global panic log
 func Panic(format string, v ...interface{}) string {
 	return loggerHandle(_globalLogger, TargetPanic, format, v...)
 }
@@ -131,6 +240,7 @@ func loggerHandle(log *SFLogger, target LogTarget, format string, v ...interface
 
 	fileLine := -1
 	funcName := "???"
+	filePath := "???"
 
 	stackBuf := new(bytes.Buffer)
 	for i := 2; ; i++ {
@@ -142,6 +252,7 @@ func loggerHandle(log *SFLogger, target LogTarget, format string, v ...interface
 		if i == 2 {
 			fileLine = line
 			funcName = fn
+			filePath = file
 		}
 		if 0 != len(file) {
 			//	L1223: runtime.goexit(...) (0x173d0)
@@ -160,6 +271,7 @@ func loggerHandle(log *SFLogger, target LogTarget, format string, v ...interface
 	logmsg.stack = stackBuf.String()
 	logmsg.fileLine = fileLine
 	logmsg.funcName = funcName
+	logmsg.filePath = filePath
 	logmsg.msg = msgString
 	logmsg.target = target
 
@@ -176,12 +288,17 @@ type LogMsg struct {
 	dateTime time.Time // create time
 	stack    string    // stack info
 	fileLine int       // go file line
+	filePath string    // file path
 	funcName string    // msg trigger func name
 	msg      string    // log message
 }
 
 //	格式化日志信息
 func logMagFormat(format string, msg *LogMsg) string {
+
+	if nil == msg {
+		return ""
+	}
 
 	//	格式化时间
 	format = SFTimeUtil.YMDHMSSSignFormat(msg.dateTime, format)
@@ -191,6 +308,7 @@ func logMagFormat(format string, msg *LogMsg) string {
 		"${LOG_GROUP}", msg.logGroup,
 		"${LOG_TAG}", msg.logTag,
 		"${FILE_LINE}", strconv.Itoa(msg.fileLine),
+		"${FILE_PATH}", msg.filePath,
 		"${FUNC_NAME}", msg.funcName,
 		"${STACK}", msg.stack,
 		"${TARGET}", string(msg.target),
@@ -223,7 +341,7 @@ func SharedLogManager(filePath string) (*LogManager, error) {
 		for _, appender := range _sharedLogConfig.InitAppenders {
 			switch appender {
 			case VAL_APPENDER_CONSOLE:
-				_implAppenderConsole = NewAppenderConsole()
+				ImplAppenderConsole = NewAppenderConsole()
 			case VAL_APPENDER_FILE:
 			case VAL_APPENDER_HTML:
 			case VAL_APPENDER_EMAIL:
@@ -271,66 +389,73 @@ func (lm *LogManager) msgHandle(msg *LogMsg) {
 		case TargetInfo:
 			if nil == config.Info {
 				tci = config.TargetConfigInfo
-			} else if nil != config.Info && !config.Info.AppenderNoneConfig.None {
+			} else if nil != config.Info {
 				tci = config.Info
 			}
 		case TargetDebug:
 			if nil == config.Debug {
 				tci = config.TargetConfigInfo
-			} else if nil != config.Debug && !config.Debug.AppenderNoneConfig.None {
+			} else if nil != config.Debug {
 				tci = config.Debug
 			}
 		case TargetError:
 			if nil == config.Error {
 				tci = config.TargetConfigInfo
-			} else if nil != config.Error && !config.Error.AppenderNoneConfig.None {
+			} else if nil != config.Error {
 				tci = config.Error
 			}
 		case TargetWarn:
 			if nil == config.Warn {
 				tci = config.TargetConfigInfo
-			} else if nil != config.Warn && !config.Warn.AppenderNoneConfig.None {
+			} else if nil != config.Warn {
 				tci = config.Warn
 			}
 		case TargetFatal:
 			if nil == config.Fatal {
 				tci = config.TargetConfigInfo
-			} else if nil != config.Fatal && !config.Fatal.AppenderNoneConfig.None {
+			} else if nil != config.Fatal {
 				tci = config.Fatal
 			}
 		case TargetPanic:
 			if nil == config.Panic {
 				tci = config.TargetConfigInfo
-			} else if nil != config.Panic && !config.Panic.AppenderNoneConfig.None {
+			} else if nil != config.Panic {
 				tci = config.Panic
 			}
 		}
 
-		if nil != tci {
-			for _, appender := range tci.Appender {
-				switch appender {
+		if nil != tci && !tci.AppenderNoneConfig.None {
+
+			count := len(tci.Appender)
+			for i := 0; i < count; i++ {
+				appenderName := tci.Appender[i]
+
+				//	扩展性的问题，由于考虑到使用for的话没有必要，毕竟需要扩展也不是很多或经常，所以目前直接使用switch来判断。
+				//	所以如果需要扩展还需要另外编写代码
+				switch appenderName {
 				case VAL_APPENDER_CONSOLE:
-					if nil != _implAppenderConsole {
-						_implAppenderConsole.Write(msg, tci)
+					if nil != ImplAppenderConsole {
+						ImplAppenderConsole.Write(msg, tci.AppenderConsoleConfig)
 					}
 				case VAL_APPENDER_FILE:
-					if nil != _implAppenderFile {
-						_implAppenderFile.Write(msg, tci)
+					if nil != ImplAppenderFile {
+						ImplAppenderFile.Write(msg, tci.AppenderFileConfig)
 					}
 				case VAL_APPENDER_HTML:
-					if nil != _implAppenderHtml {
-						_implAppenderHtml.Write(msg, tci)
+					if nil != ImplAppenderHtml {
+						ImplAppenderHtml.Write(msg, tci.AppenderHtmlConfig)
 					}
 				case VAL_APPENDER_EMAIL:
-					if nil != _implAppenderEmail {
-						_implAppenderEmail.Write(msg, tci)
+					if nil != ImplAppenderEmail {
+						ImplAppenderEmail.Write(msg, tci.AppenderEmailConfig)
 					}
 				case VAL_APPENDER_MONGODB:
-					if nil != _implAppenderMongodb {
-						_implAppenderMongodb.Write(msg, tci)
+					if nil != ImplAppenderMongodb {
+						ImplAppenderMongodb.Write(msg, tci.AppenderMongodbConfig)
 					}
 				}
 			}
+
 		}
 	}
 }

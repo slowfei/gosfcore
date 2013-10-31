@@ -8,9 +8,6 @@
 //  Home   http://www.slowfei.com
 
 //	日志的配置文件加载操作
-//	config keyword key:
-//	"info_appender" : "file"
-//
 package SFLog
 
 import (
@@ -51,7 +48,7 @@ var (
 	TargetInfo  = LogTarget("info")
 	TargetDebug = LogTarget("debug")
 	TargetError = LogTarget("error")
-	TargetWarn  = LogTarget("Warn")
+	TargetWarn  = LogTarget("warn")
 	TargetFatal = LogTarget("fatal")
 	TargetPanic = LogTarget("panic")
 
@@ -68,8 +65,8 @@ var (
 					"Appender":[
 						"console"
 					],
-					"none":true,
-					"ConsolePattern":"${yyyy}-${MM}-${dd} ${mm}:${dd}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}"
+					"none":false,
+					"ConsolePattern":"${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}"
 				}
 			}
 		}
@@ -134,7 +131,7 @@ type MainLogConfig struct {
 
 //	log config
 type LogConfig struct {
-	//	target appender
+	//	target config
 	Info  *TargetConfigInfo `json:"info"`
 	Debug *TargetConfigInfo `json:"debug"`
 	Error *TargetConfigInfo `json:"error"`
@@ -142,7 +139,7 @@ type LogConfig struct {
 	Fatal *TargetConfigInfo `json:"fatal"`
 	Panic *TargetConfigInfo `json:"panic"`
 
-	//	global appender
+	//	global config
 	*TargetConfigInfo
 }
 
@@ -160,12 +157,9 @@ type TargetConfigInfo struct {
 	AppenderNoneConfig
 }
 
-//	appender file
-type AppenderFileConfig struct {
-	MaxSize int64  `json:"FileMaxSize"` // 文件大小 byte
-	Path    string `json:"FilePath"`    // 文件存储路径
-	Name    string `json:"FileName"`    // 文件名(可以输入时间格式) file.log-{yyyy-MM-dd}
-	Pattern string `json:"FilePattern"` // 信息内容输出格式
+//	appender none
+type AppenderNoneConfig struct {
+	None bool
 }
 
 //	appender mongodb
@@ -178,9 +172,4 @@ type AppenderEmailConfig struct {
 
 //	appender html
 type AppenderHtmlConfig struct {
-}
-
-//	appender none
-type AppenderNoneConfig struct {
-	None bool
 }
