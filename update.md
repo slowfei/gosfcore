@@ -1,6 +1,13 @@
 gosfcore update log
 =============
 
+2013-11-04
+1. github.com/slowfei/gosfcore/utils/filemanager/SFFileManager.go
+> * 增加FileRenameRule 文件名重复命名的规则
+> * 增加FileCleanRenameRule 文件名重复命名规则的去除
+1. github.com/slowfei/gosfcore/utils/time/SFTimeUtil.go
+> 修改YMDHMSSS时间格式化格式为"_yyyy" to "-2006"，主要是因为 _2 是格式化日
+
 #### 2013-10-31
 1. github.com/slowfei/gosfcore/utils/filemanager/SFFileManager.go
 > * 增加获取执行文件路径函数GetExceFilePath()
