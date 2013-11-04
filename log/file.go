@@ -16,7 +16,9 @@ import (
 	"github.com/slowfei/gosfcore/utils/time"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -58,22 +60,34 @@ func NewAppenderFile() *AppenderFile {
 //	@maxSize    日志的最大容量大小
 //	@sameMaxNum 日志相同名的数量
 func (af *AppenderFile) getFile(fileName string, t time.Time, maxSize int64, sameMaxNum int64) *os.File {
-	//	TODO  opfName感觉不对，因为如果fileName进来的是file.log，那如果存储的是file(1).log呢？该如何去处理？
-	//	考虑使用file.Name()来处理
-	opfName := ""
+
+	var opfName string // 用于操作打开文件的文件名存储
+	var kfName string  // 用于存储af.files的keyname
+
 	if 0 == len(fileName) {
-		opfName = af.defaultFileName
+		fileName = af.defaultFileName
 	}
+	if 0 >= maxSize {
+		maxSize = DEFAULT_FILE_MAX_SIZE
+	}
+	if 0 >= sameMaxNum {
+		sameMaxNum = DEFAULT_FILE_MAX_NUM
+	}
+
 	opfName = SFTimeUtil.YMDHMSSSignFormat(t, fileName)
 
-	if file, ok := af.files[opfName]; ok {
+	//	主要存储的key名保持file.log不变，没有重命名的递增file(1).log
+	kfName = opfName
+
+	if file, ok := af.files[kfName]; ok {
 		if file.Stat().Size() < maxSize {
 			return file
 		}
 		file.Close()
-		delete(af.files, opfName)
+		delete(af.files, kfName)
 
-		opfName = SFFileManager.FileRenameRule(opfName)
+		//	文件名可能是file(1).log，与key不同，所以使用file.Name()
+		opfName = SFFileManager.FileRenameRule(file.Name())
 	}
 
 	oppath := filepath.Join(af.excePath, opfName)
@@ -97,32 +111,80 @@ func (af *AppenderFile) getFile(fileName string, t time.Time, maxSize int64, sam
 
 			if nil == errExists {
 				//	文件操作建立的组大范围，不进行操作了
-				//	TODO 考虑创建数的日志文件数最大范围了如何人性化的处理好。
+				//	TODO 考虑创建日志文件数超出了最大范围了该如何人性化的处理更好。
 				return nil
 			}
 
 		}
 	}
+	// flag可选值：
+	// O_RDONLY int = os.O_RDONLY // 只读
+	// O_WRONLY int = os.O_WRONLY // 只写
+	// O_RDWR   int = os.O_RDWR   // 读写
+	// O_APPEND int = os.O_APPEND // 在文件末尾追加，打开后cursor在文件结尾位置
+	// O_CREATE int = os.O_CREAT  // 如果不存在则创建
+	// O_EXCL   int = os.O_EXCL   // 与O_CREATE一起用，构成一个新建文件的功能，它要求文件必须不存在
+	// O_SYNC   int = os.O_SYNC   // 同步方式打开，没有缓存，这样写入内容直接写入硬盘，系统掉电文件内容有一定保证
+	// O_TRUNC  int = os.O_TRUNC  // 打开并清空文件
 
-	//	TODO 需要查找perm的参数信息
-	// os.OpenFile(name, flag, perm)
+	// 权限位，讲设置的权限数值进行累加
+	// 用户
+	//		0400	允许所有者读。
+	// 		0200	允许所有者写。
+	// 		0100	对于文件，允许所有者执行，对于目录，允许所有者在该目录中进行搜索。
+	// 组
+	//		0040	允许组成员读。
+	// 		0020	允许组成员写。
+	// 		0010	对于文件，允许组成员执行，对于目录，允许组成员在该目录中进行搜索。
+	// 其他用户
+	//		0004	允许其他用户读。
+	// 		0002	允许其他用户写。
+	// 		0001	对于文件，允许其他用户执行，对于目录，允许其他用户在该目录中进行搜索。
 
-	return nil
+	//	660 = 400 + 200 + 40 + 20
+	//	参考：http://www.ibm.com/developerworks/cn/aix/library/au-speakingunix4/
+	//	由于是文件第一位是0
+
+	newFile, errFile := os.OpenFile(oppath, os.O_WRONLY|os.O_APPEND|os.O_CREAT|os.O_SYNC, 0660)
+
+	if nil != errFile {
+		fmt.Printf("%v\n%s\n", errFile, debug.Stack())
+		return nil
+	}
+
+	af.files[kfName] = newFile
+	return newFile
 }
 
-//
-func (af *AppenderFile) fileWrite(fileName, msg string, maxSize int64) {
+// file write
+func (af *AppenderFile) fileWrite(msg string, t time.Time, config *AppenderFileConfig) {
 	af.rwmutex.Lock()
 	defer af.rwmutex.Unlock()
+
+	fileName := config.Name
+	maxSize := config.MaxSize
+	sameMaxNum := config.SameMaxNum
+	file := af.getFile(fileName, t, maxSize, sameMaxNum)
+	if nil != file {
+		fmt.Fprintln(file, msg)
+	}
+}
+
+//	关闭所有日志文件
+func (af *AppenderFile) CloseAllLogFile() {
+	for k, v := range af.files {
+		v.Close()
+		delete(af.files, k)
+	}
 }
 
 //	#interface impl
 //	控制台信息写入
 func (af *AppenderFile) Write(msg *LogMsg, configInfo interface{}) {
 	if fileConfig, ok := configInfo.(*AppenderFileConfig); ok {
-		formatStr := logMagFormat(fileConfig.Pattern, msg)
 
-		fmt.Println(formatStr)
+		formatStr := logMagFormat(fileConfig.Pattern, msg)
+		af.fileWrite(msg.msg, msg.dateTime, fileConfig)
 	}
 }
 
