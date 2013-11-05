@@ -61,7 +61,6 @@ var (
 			"ChannelSize" : ` + DEFAULT_CHANNEL_BUFFER_SIZE + `,
 			"LogGroups" :{
 				"` + KEY_GLOBAL_GROUP_LOG_CONFIG + `" :{
-
 					"Appender":[
 						"console"
 					],
@@ -168,8 +167,4 @@ type AppenderMongodbConfig struct {
 
 //	appender email
 type AppenderEmailConfig struct {
-}
-
-//	appender html
-type AppenderHtmlConfig struct {
 }

@@ -2,8 +2,8 @@
 //
 //	Software Source Code License Agreement (BSD License)
 //
-//  Create on 2013-8-24
-//  Update on 2013-10-31
+//  Create on 2013-08-24
+//  Update on 2013-11-05
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -77,12 +77,35 @@
 //
 //					//	下面针对Appender对象配置特定的格式信息，如果nil或没有设置则使用Appender的默认设置
 //
-//					/* console配置	*/
+//					/* ------------console配置--------------- */
 //
 //					//	控制台输出的格式，具体可以查看Pattern Format
 // 					"ConsolePattern":"${yyyy}-${MM}-${dd} ${mm}:${dd}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}",
 //
-//					/* file配置	*/
+//
+//					/* ------------file配置--------------- */
+//
+//					//	文件名(可以输入时间格式)  默认"(ExceFileName)-${yyyy}-${MM}-${dd}.log"
+//					//	配置注意事项：
+//					//	Name(FileName)  "file-${yyyy}/${MM}/${dd}.log" 	  error		如果包含"/"会以目录作为处理的，所以需要注意。
+//					//					"../file-${yyyy}-${MM}-${dd}.log" proper	可以使用相对路径来命名"/"是作为目录的操作，
+//					//																截取后面的文件名(file-${yyyy}-${MM}-${dd}.log)
+//					"FileName":"info-${yy}-${MM}-${dd}.log",
+//
+//					//	文件存储路径, 默认执行文件目录
+//					"FileSavePath":"",
+//
+//					//	输出的格式，具体可以查看Pattern Format
+//					"FilePattern":"${yyyy}-${MM}-${dd} ${mm}:${dd}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}",
+//
+//					//	文件最大存储大小，默认5M
+//					"FileMaxSize":"5242880",
+//
+//					//	日志相同名称的最大数量，例如file(1).log...file(1000).log。默认1000，超出建立的数量将不会创建日志文件
+//					"FileSameNameMaxNum":"1000",
+//
+//
+//					/* ------------html配置--------------- */
 //
 //
 //					//	控制当前日志组是否进行输出工作，如果为true则当前组不会进行信息的输出，默认可以不写为false
@@ -96,10 +119,17 @@
 //						"Appender":[
 // 							"console"
 // 						],
-//						"ConsolePattern":"${yyyy}-${MM}-${dd} ${mm}:${dd} ${MSG}",
+//						"ConsolePattern":"${yyyy}-${MM}-${dd} ${mm}:${dd} ${MSG}"
 //					},
 //					"debug":{
-//						//	配置与info都一致，想使用默认的可以不编写，不过需要去除，这样声明算是空是不会获取默认配置的。
+//						"Appender":[
+// 							"file"
+// 						],
+//						"FileName":"info-${yy}-${MM}-${dd}.log",
+//						"FileSavePath":"",
+//						"FilePattern":"${yyyy}-${MM}-${dd} ${mm}:${dd}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}",
+//						"FileMaxSize":"5242880",
+//						"FileSameNameMaxNum":"1000"
 //					},
 //					"error":{
 //						//	配置与info都一致。
@@ -299,6 +329,9 @@ func logMagFormat(format string, msg *LogMsg) string {
 	if nil == msg {
 		return ""
 	}
+	if 0 == len(format) {
+		format = "${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}"
+	}
 
 	//	格式化时间
 	format = SFTimeUtil.YMDHMSSSignFormat(msg.dateTime, format)
@@ -343,6 +376,7 @@ func SharedLogManager(filePath string) (*LogManager, error) {
 			case VAL_APPENDER_CONSOLE:
 				ImplAppenderConsole = NewAppenderConsole()
 			case VAL_APPENDER_FILE:
+				ImplAppenderFile = NewAppenderFile()
 			case VAL_APPENDER_HTML:
 			case VAL_APPENDER_EMAIL:
 			case VAL_APPENDER_MONGODB:
