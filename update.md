@@ -1,6 +1,9 @@
 gosfcore update log
 =============
 
+1. github.com/slowfei/gosfcore/log
+> * 进行编写中...
+
 2013-11-04
 1. github.com/slowfei/gosfcore/utils/filemanager/SFFileManager.go
 > * 增加FileRenameRule 文件名重复命名的规则
