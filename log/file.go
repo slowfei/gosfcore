@@ -41,10 +41,12 @@ type AppenderFileConfig struct {
 
 // Appender impl console write
 type AppenderFile struct {
-	excePath        string              // file save path
-	defaultFileName string              // default file name
-	files           map[string]*os.File // key = file name
-	rwmutex         sync.RWMutex
+	excePath          string              // file save path
+	defaultFileName   string              // default file name
+	defaultMaxSize    int64               // default file max size 5M
+	defaultSameMaxNum int                 // default file same max mum 1000
+	files             map[string]*os.File // key = file name
+	rwmutex           sync.RWMutex
 }
 
 //	new console impl
@@ -52,14 +54,16 @@ func NewAppenderFile() *AppenderFile {
 	af := &AppenderFile{}
 	af.excePath = SFFileManager.GetExceDir()
 	//	默认存储文件以天来存储
-	af.defaultFileName = SFFileManager.GetExceFileName() + "-${yyyy}-${MM}-${dd}.log"
+	af.defaultFileName = SFFileManager.GetExceFileName() + "-${yyyy}${MM}${dd}.log"
 	af.files = make(map[string]*os.File)
+	af.defaultMaxSize = DEFAULT_FILE_MAX_SIZE
+	af.defaultSameMaxNum = DEFAULT_FILE_MAX_NUM
 	return af
 }
 
 //	获取文件对象
 //	@savePath	文件存储路径，		"" = 执行文件的目录
-//	@fileName   文件名称				"" = "(ExceFileName)-${yyyy}-${MM}-${dd}.log"
+//	@fileName   文件名称				"" = "(ExceFileName)-${yyyy}${MM}${dd}.log"
 //	@t 		    日志操作的时间
 //	@maxSize    日志的最大容量大小		默认 5M
 //	@sameMaxNum 日志相同名的数量		默认 1000
@@ -72,10 +76,10 @@ func (af *AppenderFile) getFile(savePath, fileName string, t time.Time, maxSize 
 		fileName = af.defaultFileName
 	}
 	if 0 >= maxSize {
-		maxSize = DEFAULT_FILE_MAX_SIZE
+		maxSize = af.defaultMaxSize
 	}
 	if 0 >= sameMaxNum {
-		sameMaxNum = DEFAULT_FILE_MAX_NUM
+		sameMaxNum = af.defaultSameMaxNum
 	}
 	if 0 == len(savePath) {
 		savePath = af.excePath
@@ -173,13 +177,13 @@ func (af *AppenderFile) getFile(savePath, fileName string, t time.Time, maxSize 
 
 // file write
 func (af *AppenderFile) fileWrite(msg string, t time.Time, config *AppenderFileConfig) {
-	af.rwmutex.Lock()
-	defer af.rwmutex.Unlock()
-
 	fileName := config.Name
 	maxSize := config.MaxSize
 	sameMaxNum := config.SameMaxNum
 	savePath := config.SavePath
+
+	af.rwmutex.Lock()
+	defer af.rwmutex.Unlock()
 
 	file := af.getFile(savePath, fileName, t, maxSize, sameMaxNum)
 	if nil != file {
@@ -189,6 +193,8 @@ func (af *AppenderFile) fileWrite(msg string, t time.Time, config *AppenderFileC
 
 //	关闭所有日志文件
 func (af *AppenderFile) CloseAllLogFile() {
+	af.rwmutex.Lock()
+	defer af.rwmutex.Unlock()
 	for k, v := range af.files {
 		v.Close()
 		delete(af.files, k)
@@ -199,8 +205,12 @@ func (af *AppenderFile) CloseAllLogFile() {
 //	控制台信息写入
 func (af *AppenderFile) Write(msg *LogMsg, configInfo interface{}) {
 	if fileConfig, ok := configInfo.(*AppenderFileConfig); ok {
-		formatStr := logMagFormat(fileConfig.Pattern, msg)
-		af.fileWrite(formatStr, msg.dateTime, fileConfig)
+		format := fileConfig.Pattern
+		if 0 == len(format) {
+			format = DEFAULT_PATTERN
+		}
+		msgFormat := logMagFormat(format, msg)
+		af.fileWrite(msgFormat, msg.dateTime, fileConfig)
 	}
 }
 

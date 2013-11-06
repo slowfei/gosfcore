@@ -22,6 +22,8 @@ const (
 	KEY_GLOBAL_GROUP_LOG_CONFIG = "globalGroup"
 	//	default channel buffer size
 	DEFAULT_CHANNEL_BUFFER_SIZE = "3000"
+	// defalut pattern
+	DEFAULT_PATTERN = "${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}"
 
 	//	log target
 	LOG_INFO  = "info"
@@ -163,8 +165,4 @@ type AppenderNoneConfig struct {
 
 //	appender mongodb
 type AppenderMongodbConfig struct {
-}
-
-//	appender email
-type AppenderEmailConfig struct {
 }

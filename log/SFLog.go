@@ -7,7 +7,7 @@
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
-//	日志操作，类似java的log4j
+//	日志操作，能够分别处理不同的日志级别信息配置
 //	info debug error warn ftal panic level
 //	out console file html mongodb email
 //
@@ -90,7 +90,7 @@
 //					//	Name(FileName)  "file-${yyyy}/${MM}/${dd}.log" 	  error		如果包含"/"会以目录作为处理的，所以需要注意。
 //					//					"../file-${yyyy}-${MM}-${dd}.log" proper	可以使用相对路径来命名"/"是作为目录的操作，
 //					//																截取后面的文件名(file-${yyyy}-${MM}-${dd}.log)
-//					"FileName":"info-${yy}-${MM}-${dd}.log",
+//					"FileName":"info-${yy}${MM}${dd}.log",
 //
 //					//	文件存储路径, 默认执行文件目录
 //					"FileSavePath":"",
@@ -106,6 +106,51 @@
 //
 //
 //					/* ------------html配置--------------- */
+//
+//					//	注意事项与file配置的Name相同
+//					"HtmlName":"log-${yy}${MM}${dd}.html",
+//
+//					//	文件存储路径, 默认执行文件目录
+//					"HtmlSavePath":"",
+//
+//					//	html title
+//					"HtmlTitle":"Log Info",
+//
+//					//	时间格式需要注意没有${}
+//					"HtmlTimeFormat":"yyyy-MM-dd hh:mm",
+//
+//					//	文件最大存储大小，默认3M
+//					"HtmlMaxSize":"3145728",
+//
+//					//	与file配置相同
+//					"HtmlSameNameMaxNum":"1000",
+//
+//
+//					/* ------------email配置--------------- */
+//
+//					//	不可为空，否则不进行输出
+//					"EmailHost":"smtp.xxx.com",
+//
+//					//	非空
+//					"EmailUser":"xxx@gmail.com",
+//
+//					//	非空
+//					"EmailPassword":"123456",
+//
+//					//	发送邮件显示的发送人名称
+//					"EmailFromName":"slowfei",
+//
+//					//	发送地址
+//					"EmailTo":"xx@gmail.com;xx2@gmail.com",
+//
+//					//	输出信息的格式，具体可以查看Pattern Format
+//					"EmailPattern":"${yyyy}-${MM}-${dd} ${mm}:${dd}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}",
+//
+//					//	邮件主题
+//					"EmailSubject":"Golang Log Info",
+//
+//					//	默认Content-Type: text/plain; charset=UTF-8
+//					"EmailContentType":"Content-Type: text/plain; charset=UTF-8"
 //
 //
 //					//	控制当前日志组是否进行输出工作，如果为true则当前组不会进行信息的输出，默认可以不写为false
@@ -132,10 +177,28 @@
 //						"FileSameNameMaxNum":"1000"
 //					},
 //					"error":{
-//						//	配置与info都一致。
+//						"Appender":[
+// 							"html"
+// 						],
+//						"HtmlName":"log-${yy}${MM}${dd}.html",
+//						"HtmlSavePath":"",
+//						"HtmlTitle":"LogInfo",
+//						"HtmlTimeFormat":"yyyy-MM-dd hh:mm",
+//						"HtmlMaxSize":"3145728",
+//						"HtmlSameNameMaxNum":"1000",
 //					},
 //					"warn":{
-//						//	配置与info都一致。
+//						"Appender":[
+// 							"email"
+// 						],
+//						"EmailHost":"smtp.xxx.com",
+//						"EmailUser":"xxx@gmail.com",
+//						"EmailPassword":"123456",
+//						"EmailFromName":"slowfei",
+//						"EmailTo":"xx@gmail.com;xx2@gmail.com",
+//						"EmailPattern":"${yyyy}-${MM}-${dd} ${mm}:${dd}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}",
+//						"EmailSubject":"Golang Log Info",
+//						"EmailContentType":"Content-Type: text/plain; charset=UTF-8"
 //					},
 //					"fatal":{
 //						//	配置与info都一致。
@@ -272,7 +335,7 @@ func loggerHandle(log *SFLogger, target LogTarget, format string, v ...interface
 	funcName := "???"
 	filePath := "???"
 
-	stackBuf := new(bytes.Buffer)
+	stackBuf := bytes.NewBufferString("")
 	for i := 2; ; i++ {
 		pc, file, line, ok := runtime.Caller(i)
 		if !ok {
@@ -283,6 +346,11 @@ func loggerHandle(log *SFLogger, target LogTarget, format string, v ...interface
 			fileLine = line
 			funcName = fn
 			filePath = file
+
+			if TargetInfo == target {
+				//	如果目标为info就不打印其他堆栈信息了。
+				break
+			}
 		}
 		if 0 != len(file) {
 			//	L1223: runtime.goexit(...) (0x173d0)
@@ -378,7 +446,9 @@ func SharedLogManager(filePath string) (*LogManager, error) {
 			case VAL_APPENDER_FILE:
 				ImplAppenderFile = NewAppenderFile()
 			case VAL_APPENDER_HTML:
+				ImplAppenderHtml = NewAppenderHtml()
 			case VAL_APPENDER_EMAIL:
+				ImplAppenderEmail = NewAppenderEmail()
 			case VAL_APPENDER_MONGODB:
 			}
 		}
@@ -468,23 +538,23 @@ func (lm *LogManager) msgHandle(msg *LogMsg) {
 				//	所以如果需要扩展还需要另外编写代码
 				switch appenderName {
 				case VAL_APPENDER_CONSOLE:
-					if nil != ImplAppenderConsole {
+					if nil != ImplAppenderConsole && nil != tci.AppenderConsoleConfig {
 						ImplAppenderConsole.Write(msg, tci.AppenderConsoleConfig)
 					}
 				case VAL_APPENDER_FILE:
-					if nil != ImplAppenderFile {
+					if nil != ImplAppenderFile && nil != tci.AppenderFileConfig {
 						ImplAppenderFile.Write(msg, tci.AppenderFileConfig)
 					}
 				case VAL_APPENDER_HTML:
-					if nil != ImplAppenderHtml {
+					if nil != ImplAppenderHtml && nil != tci.AppenderHtmlConfig {
 						ImplAppenderHtml.Write(msg, tci.AppenderHtmlConfig)
 					}
 				case VAL_APPENDER_EMAIL:
-					if nil != ImplAppenderEmail {
+					if nil != ImplAppenderEmail && nil != tci.AppenderEmailConfig {
 						ImplAppenderEmail.Write(msg, tci.AppenderEmailConfig)
 					}
 				case VAL_APPENDER_MONGODB:
-					if nil != ImplAppenderMongodb {
+					if nil != ImplAppenderMongodb && nil != tci.AppenderMongodbConfig {
 						ImplAppenderMongodb.Write(msg, tci.AppenderMongodbConfig)
 					}
 				}

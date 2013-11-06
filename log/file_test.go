@@ -23,7 +23,7 @@ func TestWriteFile(t *testing.T) {
 	config.MaxSize = 256
 	config.SavePath = "/Users/slowfei/Downloads/test/log"
 	config.Name = "../test-${yyyy}-${MM}-${dd}-${hh}.log"
-	config.Pattern = "${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}"
+	// config.Pattern = "${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}"
 
 	for i := 0; i < 10; i++ {
 		num := strconv.Itoa(i)

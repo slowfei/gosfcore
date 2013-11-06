@@ -1,8 +1,11 @@
 gosfcore update log
 =============
 
+2013-11-06
 1. github.com/slowfei/gosfcore/log
-> * 进行编写中...
+> * 实现log日志组件
+> * 针对每个Info、Debug...进行不同的配置
+> * 目前实现了console、file、html、email模块，sql和nosql后期有时间再弄。
 
 2013-11-04
 1. github.com/slowfei/gosfcore/utils/filemanager/SFFileManager.go
