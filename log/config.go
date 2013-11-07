@@ -12,7 +12,9 @@ package SFLog
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
+	"sync"
 )
 
 const (
@@ -20,8 +22,6 @@ const (
 	LOG_SEPARATOR = "_"
 	//	global group log config
 	KEY_GLOBAL_GROUP_LOG_CONFIG = "globalGroup"
-	//	default channel buffer size
-	DEFAULT_CHANNEL_BUFFER_SIZE = "3000"
 	// defalut pattern
 	DEFAULT_PATTERN = "${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}"
 
@@ -60,7 +60,6 @@ var (
 			"InitAppenders":[
 				"console"
 			],
-			"ChannelSize" : ` + DEFAULT_CHANNEL_BUFFER_SIZE + `,
 			"LogGroups" :{
 				"` + KEY_GLOBAL_GROUP_LOG_CONFIG + `" :{
 					"Appender":[
@@ -75,12 +74,12 @@ var (
 
 	//	log config map
 	_sharedLogConfig *MainLogConfig = nil
+	_rwmutex         sync.RWMutex
 )
 
 //	log init
 func init() {
 	_sharedLogConfig = new(MainLogConfig)
-	// _sharedLogConfig.ChannelSize = DEFAULT_CHANNEL_BUFFER_SIZE
 	_sharedLogConfig.LogGroups = make(map[string]LogConfig)
 
 	//	初始化的时候加载一次默认的配置
@@ -92,7 +91,13 @@ func init() {
 //	reset load config
 //	@filePath	相对或绝对路径
 func LoadConfig(filePath string) error {
+	if nil == _sharedLogConfig {
+		return errors.New("not start log manager: SFLog.StartLogManager(...)")
+	}
+
 	if 0 != len(filePath) {
+		_rwmutex.Lock()
+		defer _rwmutex.Unlock()
 
 		jsonData, e1 := ioutil.ReadFile(filePath)
 		if nil != e1 {
@@ -105,6 +110,7 @@ func LoadConfig(filePath string) error {
 			return e2
 		}
 
+		loadAppenders()
 	}
 	return nil
 }
@@ -112,6 +118,9 @@ func LoadConfig(filePath string) error {
 //	reset load config
 //	@jsonDataq
 func LoadConfigByJson(jsonData []byte) error {
+	if nil == _sharedLogConfig {
+		return errors.New("not start log manager: SFLog.StartLogManager(...)")
+	}
 
 	e2 := json.Unmarshal(jsonData, _sharedLogConfig)
 
@@ -119,12 +128,13 @@ func LoadConfigByJson(jsonData []byte) error {
 		return e2
 	}
 
+	loadAppenders()
+
 	return nil
 }
 
 //	main log config
 type MainLogConfig struct {
-	ChannelSize   int                  // 通道缓冲区大小
 	InitAppenders []string             // init appenders impl. console, file...
 	TimeFormat    string               // time format
 	LogGroups     map[string]LogConfig // log tags日志标识集合元素

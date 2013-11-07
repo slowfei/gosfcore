@@ -61,9 +61,6 @@
 // 			"console","file","email","html","mongodb"
 // 		],
 //
-//		//	设置channel 的缓冲大小
-// 		"ChannelSize" : "3000",
-//
 //		//	日志组的配置，包含多个日志组的配置信息
 // 		"LogGroups" :{
 //
@@ -428,35 +425,49 @@ type LogManager struct {
 	msg       chan *LogMsg
 }
 
-//	shared log manager
-//	@filePath	相对或绝对路径, ""为使用默认配置
-func SharedLogManager(filePath string) (*LogManager, error) {
+//	start log manager
+//	调用此方法启动时加载默认配置进行设置，
+//	如果需要加载配置文件可以调用LoadConfig进行相应的设置。
+//
+//	@logChannelSize log的缓存区大小，默认
+func StartLogManager(logChannelSize int) {
 	if nil == _thisLogManager {
 		_thisLogManager = new(LogManager)
-		err := LoadConfig(filePath)
-		if nil != err {
-			return nil, err
-		}
+		_thisLogManager.msg = make(chan *LogMsg, logChannelSize)
+		loadAppenders()
+		go _thisLogManager.startChannel()
+	}
+}
+
+//	init appenders
+func loadAppenders() {
+	if nil != _thisLogManager {
 
 		//	初始化appender的实现
 		for _, appender := range _sharedLogConfig.InitAppenders {
 			switch appender {
 			case VAL_APPENDER_CONSOLE:
-				ImplAppenderConsole = NewAppenderConsole()
+				if nil == ImplAppenderConsole {
+					ImplAppenderConsole = NewAppenderConsole()
+				}
 			case VAL_APPENDER_FILE:
-				ImplAppenderFile = NewAppenderFile()
+				if nil == ImplAppenderFile {
+					ImplAppenderFile = NewAppenderFile()
+				}
 			case VAL_APPENDER_HTML:
-				ImplAppenderHtml = NewAppenderHtml()
+				if nil == ImplAppenderHtml {
+					ImplAppenderHtml = NewAppenderHtml()
+				}
 			case VAL_APPENDER_EMAIL:
-				ImplAppenderEmail = NewAppenderEmail()
+				if nil == ImplAppenderEmail {
+					ImplAppenderEmail = NewAppenderEmail()
+				}
 			case VAL_APPENDER_MONGODB:
 			}
 		}
 
-		_thisLogManager.msg = make(chan *LogMsg, _sharedLogConfig.ChannelSize)
-		go _thisLogManager.startChannel()
 	}
-	return _thisLogManager, nil
+
 }
 
 //	开启通道监控

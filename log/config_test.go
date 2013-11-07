@@ -12,7 +12,6 @@ func testLoadConfig(t *testing.T) {
 		fmt.Println(err)
 		fmt.Println(_defaultConfig)
 	} else {
-		fmt.Println(_sharedLogConfig.ChannelSize)
 		fmt.Println(_sharedLogConfig.LogGroups[KEY_GLOBAL_GROUP_LOG_CONFIG].AppenderConsoleConfig)
 		fmt.Println(_sharedLogConfig.LogGroups[KEY_GLOBAL_GROUP_LOG_CONFIG].Info.AppenderConsoleConfig)
 		fmt.Println(_sharedLogConfig.LogGroups[KEY_GLOBAL_GROUP_LOG_CONFIG].Info.AppenderNoneConfig)

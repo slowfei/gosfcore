@@ -9,7 +9,7 @@ import (
 // 测试日志
 func TestLogger(t *testing.T) {
 	//	开启日志管理
-	SharedLogManager("")
+	StartLogManager(3000)
 	start := time.Now()
 
 	start = time.Now()
