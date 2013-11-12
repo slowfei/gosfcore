@@ -65,22 +65,24 @@ func GetExceFileName() string {
 
 //	判断路径是否存在文件或目录
 //	@path	操作路径
-//	@isDir	指针，引用传递接收 否是目录, true is dir
-//	@reutrn	bool 文件存在 true
-func Exists(path string, isDir *bool) (bool, error) {
-	fileInfo, err := os.Stat(path)
+//	@reutrn	isExists 是否存在，存在true
+//	@reutrn	isDir	 是否是目录
+//	@return err		 错误信息
+func Exists(path string) (isExists bool, isDir bool, err error) {
+	isExists = false
+	isDir = false
+	err = nil
 
-	if err == nil {
-		if nil != isDir {
-			*isDir = fileInfo.IsDir()
-		}
-		return true, nil
+	fileInfo, e := os.Stat(path)
+
+	if e == nil {
+		isExists = true
+		isDir = fileInfo.IsDir()
+	} else {
+		err = e
 	}
 
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return false, err
+	return
 }
 
 //	文件名重复命名的规则，例如相同的名称重复命名 name.txt、name(2).txt、name(3).txt...

@@ -13,7 +13,9 @@ package SFLog
 import (
 	"encoding/json"
 	"errors"
+	"github.com/slowfei/gosfcore/utils/filemanager"
 	"io/ioutil"
+	"path/filepath"
 	"sync"
 )
 
@@ -89,17 +91,29 @@ func init() {
 }
 
 //	reset load config
-//	@filePath	相对或绝对路径
-func LoadConfig(filePath string) error {
+//	@configPath	相对或绝对路径
+func LoadConfig(configPath string) error {
 	if nil == _sharedLogConfig {
 		return errors.New("not start log manager: SFLog.StartLogManager(...)")
 	}
 
-	if 0 != len(filePath) {
+	if 0 != len(configPath) {
 		_rwmutex.Lock()
 		defer _rwmutex.Unlock()
 
-		jsonData, e1 := ioutil.ReadFile(filePath)
+		var path string
+		if filepath.IsAbs(configPath) {
+			path = configPath
+		} else {
+			path = filepath.Join(SFFileManager.GetExceDir(), configPath)
+		}
+
+		isExists, isDir, _ := SFFileManager.Exists(path)
+		if !isExists || isDir {
+			return errors.New("failed to load configuration file:" + configPath)
+		}
+
+		jsonData, e1 := ioutil.ReadFile(path)
 		if nil != e1 {
 			return e1
 		}
@@ -116,7 +130,7 @@ func LoadConfig(filePath string) error {
 }
 
 //	reset load config
-//	@jsonDataq
+//	@jsonData
 func LoadConfigByJson(jsonData []byte) error {
 	if nil == _sharedLogConfig {
 		return errors.New("not start log manager: SFLog.StartLogManager(...)")
