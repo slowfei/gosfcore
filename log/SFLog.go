@@ -36,6 +36,8 @@
 //
 //			信息会根据日志组的设置进行相应的输出。
 //
+//	配置文件加载
+//
 //	配置详解：
 //	Pattern Format(信息输出时的格式化操作)：
 //		${yyyy}			年
@@ -325,8 +327,11 @@ func loggerHandle(log *SFLogger, target LogTarget, format string, v ...interface
 		fmt.Println(msgString)
 		return msgString
 	}
-
-	msgString = fmt.Sprintf(format, v...)
+	if 0 != len(v) {
+		msgString = fmt.Sprintf(format, v...)
+	} else {
+		msgString = format
+	}
 
 	fileLine := -1
 	funcName := "???"
