@@ -30,13 +30,16 @@
 //			操作信息：记录信息操作。
 //
 //		也可以自定义一个日志标识然后结合日志的配置进行信息的输出，如果没有定义日志组，默认使用全局日志组的配置。
-//			var log *SFLogger = NewLogger("logtag") or NewLogger("logtag","logGroup")
+//			var log *SFLogger = NewLogger("logtag") or NewLoggerByGroup("logtag","logGroup")
 //
 //			log.Info("操作信息：记录信息操作。")
 //
 //			信息会根据日志组的设置进行相应的输出。
 //
-//	配置文件加载
+//	配置文件加载：
+//		使用LoadConfig(configPath string)指定配置文件路径进行加载，相对路径或绝对路径，相对路径以执行文件目录开始。
+//		也可以使用LoadConfigByJson(jsonData []byte)指定json文本信息加载
+//		配置加载是以覆盖形式进行操作，可以多次进行配置的加载，存储配置的结构(_sharedLogConfig)。
 //
 //	配置详解：
 //	Pattern Format(信息输出时的格式化操作)：
@@ -205,8 +208,8 @@
 //					"panic":{
 //						//	配置与info都一致。
 //					}
-// 				}
 // 			}
+//		}
 // 	}
 //
 package SFLog
@@ -355,11 +358,11 @@ func loggerHandle(log *SFLogger, target LogTarget, format string, v ...interface
 			}
 		}
 		if 0 != len(file) {
-			//	L1223: runtime.goexit(...) (0x173d0)
+			//	/usr/local/go/src/pkg/runtime/proc.c:1223 (0x173d0)
 			fmt.Fprintf(stackBuf, "%s(...)\n%s:%d (0x%x)\n", fn, file, line, pc)
 		} else {
 			// 	runtime.goexit(...)
-			// /usr/local/go/src/pkg/runtime/proc.c:1223 (0x173d0)
+			// 	L1223: runtime.goexit(...) (0x173d0)
 			fmt.Fprintf(stackBuf, "L%d: %s(...) (0x%x)\n", line, fn, pc)
 		}
 	}

@@ -91,7 +91,7 @@ func init() {
 }
 
 //	reset load config
-//	@configPath	相对或绝对路径
+//	@configPath	相对或绝对路径，相对路径以执行文件目录开始
 func LoadConfig(configPath string) error {
 	if nil == _sharedLogConfig {
 		return errors.New("not start log manager: SFLog.StartLogManager(...)")

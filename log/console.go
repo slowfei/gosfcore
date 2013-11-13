@@ -50,7 +50,7 @@ func (ac *AppenderConsole) Write(msg *LogMsg, configInfo interface{}) {
 	}
 
 	if 0 != len(pattern) {
-		fmt.Print(logMagFormat(pattern, msg))
+		fmt.Println(logMagFormat(pattern, msg))
 	}
 
 }
