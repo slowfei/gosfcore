@@ -33,8 +33,10 @@ type Tstruct struct {
 
 func TestDegub(t *testing.T) {
 	fmt.Println("start:...？")
-
-	Break("v1", "v2")
+	v := Tstruct{}
+	v.F1 = "vf1"
+	v.F2 = "vf2"
+	Break(false, "v1", "v2", v)
 
 	fmt.Println("end...")
 }

@@ -26,10 +26,10 @@ const (
 )
 
 //	break
-func Break(v ...interface{}) {
+func Break(format bool, v ...interface{}) {
 
 	fmt.Println("Variables:")
-	Dump(v...)
+	Fdump(os.Stdout, format, v...)
 
 	var pc, file, line, ok = runtime.Caller(1)
 	if ok {
@@ -54,6 +54,7 @@ func Break(v ...interface{}) {
 
 	fmt.Println("\nPress Enter to Continue")
 	fmt.Scanln()
+	fmt.Println("Break End...")
 }
 
 //	打印参数的结构信息
