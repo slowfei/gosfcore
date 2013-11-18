@@ -396,16 +396,3 @@ func SetBaseTypeValue(refValue reflect.Value, setVal interface{}) error {
 
 	return errTemp
 }
-
-//	打印参数的结构信息
-//	@out
-//	@v		需要打印的参数
-func Fdump(out io.Writer, v interface{}) {
-	//	TODO 还未实现
-	//	可参考：https://code.google.com/p/golang/source/browse/src/pkg/dump/dump.go
-}
-
-//	直接使用os.Stdout 进行参数结构信息的打印
-func Dump(v interface{}) {
-	Fdump(os.Stdout, v)
-}
