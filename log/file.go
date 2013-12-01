@@ -52,9 +52,9 @@ type AppenderFile struct {
 //	new console impl
 func NewAppenderFile() *AppenderFile {
 	af := &AppenderFile{}
-	af.excePath = SFFileManager.GetExceDir()
+	af.excePath = SFFileManager.GetExecDir()
 	//	默认存储文件以天来存储
-	af.defaultFileName = SFFileManager.GetExceFileName() + "-${yyyy}${MM}${dd}.log"
+	af.defaultFileName = SFFileManager.GetExecFileName() + "-${yyyy}${MM}${dd}.log"
 	af.files = make(map[string]*os.File)
 	af.defaultMaxSize = DEFAULT_FILE_MAX_SIZE
 	af.defaultSameMaxNum = DEFAULT_FILE_MAX_NUM

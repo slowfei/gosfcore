@@ -105,7 +105,7 @@ func LoadConfig(configPath string) error {
 		if filepath.IsAbs(configPath) {
 			path = configPath
 		} else {
-			path = filepath.Join(SFFileManager.GetExceDir(), configPath)
+			path = filepath.Join(SFFileManager.GetExecDir(), configPath)
 		}
 
 		isExists, isDir, _ := SFFileManager.Exists(path)

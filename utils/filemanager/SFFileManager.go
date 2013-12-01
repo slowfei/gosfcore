@@ -22,7 +22,7 @@ import (
 
 var (
 	//	存储当前执行文件的路径，这样可以避免每次获取不必要的计算。
-	_currentExceFilePath string
+	_currentExecFilePath string
 
 	//	文件重命名规则的正则
 	_rexRenameRule = regexp.MustCompile("\\(\\d+\\)")
@@ -30,37 +30,37 @@ var (
 
 //	获取当前执行文件的操作目录
 //	@return
-func GetExceDir() string {
-	return filepath.Dir(GetExceFilePath())
+func GetExecDir() string {
+	return filepath.Dir(GetExecFilePath())
 }
 
 //	获取当前执行文件的路径
 //	@return
-func GetExceFilePath() string {
+func GetExecFilePath() string {
 
-	if 0 != len(_currentExceFilePath) {
-		return _currentExceFilePath
+	if 0 != len(_currentExecFilePath) {
+		return _currentExecFilePath
 	}
 
-	exceFile, err := exec.LookPath(os.Args[0])
+	execFile, err := exec.LookPath(os.Args[0])
 	if nil != err {
 		panic(err)
 	}
 
-	exceFilePath, err2 := filepath.Abs(exceFile)
+	execFilePath, err2 := filepath.Abs(execFile)
 	if nil != err2 {
 		panic(err2)
 	}
 
-	_currentExceFilePath = exceFilePath
+	_currentExecFilePath = execFilePath
 
-	return exceFilePath
+	return execFilePath
 }
 
 //	获取当前执行文件的名称
 //	@return
-func GetExceFileName() string {
-	return filepath.Base(GetExceFilePath())
+func GetExecFileName() string {
+	return filepath.Base(GetExecFilePath())
 }
 
 //	判断路径是否存在文件或目录

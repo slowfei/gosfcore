@@ -65,7 +65,7 @@ type AppenderHtml struct {
 func NewAppenderHtml() *AppenderHtml {
 	ah := &AppenderHtml{}
 	ah.writeFile = NewAppenderFile()
-	ah.writeFile.defaultFileName = SFFileManager.GetExceFileName() + "-${yyyy}${MM}${dd}.html"
+	ah.writeFile.defaultFileName = SFFileManager.GetExecFileName() + "-${yyyy}${MM}${dd}.html"
 	ah.writeFile.defaultMaxSize = DEFAULT_HTML_MAX_SIZE
 	ah.writeFile.defaultSameMaxNum = DEFAULT_HTML_MAX_NUM
 	return ah
