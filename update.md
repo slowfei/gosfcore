@@ -1,6 +1,10 @@
 gosfcore update log
 =============
 
+2013-11-18
+1./src/github.com/slowfei/gosfcore/debug
+> * debug工具，支持断点，打印参数结构信息
+
 2013-11-06
 1. github.com/slowfei/gosfcore/log
 > * 实现log日志组件
