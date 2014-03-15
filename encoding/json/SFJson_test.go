@@ -23,6 +23,22 @@ type StructJson struct {
 	}
 }
 
+//	测试创建空json对象
+func TestJsonNewNil(t *testing.T) {
+	arrayNil := NewJsonNil(true)
+	if arrayNil.String() != "[]" {
+		t.Fatal("new array json nil != []")
+		return
+	}
+
+	mapNil := NewJsonNil(false)
+	if mapNil.String() != "{}" {
+		t.Fatal("new map json nil != {}")
+		return
+	}
+
+}
+
 func TestMarshal(t *testing.T) {
 	var sj StructJson
 	sj.Name = "slowfei"

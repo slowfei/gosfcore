@@ -55,7 +55,28 @@ func NewJson(v interface{}, nullTag, boolTag string) (Json, error) {
 	return j, err
 }
 
+//	创建一个空类型的Json对象，输出的信息为{} or []
+//
+//	@isArray YES nil info = [], NO nil info = {}
+//
+func NewJsonNil(isArray bool) Json {
+	var j Json
+
+	if isArray {
+		j = Json{nil, *bytes.NewBufferString("[]"), "", ""}
+	} else {
+		j = Json{nil, *bytes.NewBufferString("{}"), "", ""}
+
+	}
+	return j
+}
+
 func (j *Json) analyzeJson() error {
+
+	if 0 < j.analyzedBuf.Len() {
+		return nil
+	}
+
 	if nil == j.rawdata {
 		return errors.New("Json raw data nil, can not be analyzed")
 	}
