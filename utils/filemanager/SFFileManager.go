@@ -2,8 +2,8 @@
 //
 //	Software Source Code License Agreement (BSD License)
 //
-//  Create on 2013-8-24
-//  Update on 2013-10-31
+//  Create on 2013-08-24
+//  Update on 2014-05-27
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -28,14 +28,35 @@ var (
 	_rexRenameRule = regexp.MustCompile("\\(\\d+\\)")
 )
 
-//	获取当前执行文件的操作目录
-//	@return
+/**
+ *	获取当前命令行目录
+ *
+ *	@return
+ */
+func GetCmdDir() string {
+	file, err := os.Getwd()
+
+	if nil != err {
+		panic(err)
+	}
+
+	return file
+}
+
+/**
+ *	获取当前执行文件的操作目录
+ *
+ *	@return
+ */
 func GetExecDir() string {
 	return filepath.Dir(GetExecFilePath())
 }
 
-//	获取当前执行文件的路径
-//	@return
+/**
+ *	获取当前执行文件的路径
+ *
+ *	@return
+ */
 func GetExecFilePath() string {
 
 	if 0 != len(_currentExecFilePath) {
@@ -57,17 +78,23 @@ func GetExecFilePath() string {
 	return execFilePath
 }
 
-//	获取当前执行文件的名称
-//	@return
+/**
+ *	获取当前执行文件的名称
+ *
+ *	@return
+ */
 func GetExecFileName() string {
 	return filepath.Base(GetExecFilePath())
 }
 
-//	判断路径是否存在文件或目录
-//	@path	操作路径
-//	@reutrn	isExists 是否存在，存在true
-//	@reutrn	isDir	 是否是目录
-//	@return err		 错误信息
+/**
+ *	判断路径是否存在文件或目录
+ *
+ *	@path	操作路径
+ *	@reutrn	isExists 是否存在，存在true
+ *	@reutrn	isDir	 是否是目录
+ *	@return err		 错误信息
+ */
 func Exists(path string) (isExists bool, isDir bool, err error) {
 	isExists = false
 	isDir = false
@@ -85,9 +112,12 @@ func Exists(path string) (isExists bool, isDir bool, err error) {
 	return
 }
 
-//	文件名重复命名的规则，例如相同的名称重复命名 name.txt、name(2).txt、name(3).txt...
-//	@name
-//	@return
+/**
+ *	文件名重复命名的规则，例如相同的名称重复命名 name.txt、name(2).txt、name(3).txt...
+ *
+ *	@name		file name
+ *	@return		"name(2).txt" => "name(3).txt"
+ */
 func FileRenameRule(name string) string {
 	result := ""
 	// strings.SplitN(s, sep, n)
@@ -111,9 +141,12 @@ func FileRenameRule(name string) string {
 	return result
 }
 
-//	去除文件的重名规则，name(2).txt ＝ name.txt
-//	@name
-//	@return
+/**
+ *	去除文件的重名规则
+ *
+ *	@name		file name
+ *	@return		name(2).txt => name.txt
+ */
 func FileCleanRenameRule(name string) string {
 	result := ""
 	// strings.SplitN(s, sep, n)

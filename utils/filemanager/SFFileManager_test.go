@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+//	测试获取命令行目录
+func TestGetCmdDir(t *testing.T) {
+	fmt.Println("GetCmdDir: " + GetCmdDir())
+	fmt.Println("GetExecDir: " + GetExecDir())
+}
+
 //	测试重命名规则
 func TestFileRenameRule(t *testing.T) {
 	fileName := "file.txt"

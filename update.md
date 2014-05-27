@@ -1,6 +1,10 @@
 gosfcore update log
 =============
 
+2014-05-28
+1. /src/github.com/slowfei/gosfcore/utils/filemanager/SFFileManager.go
+> * 增加获取当前命令行目录函数GetCmdDir()
+
 2013-11-18
 1./src/github.com/slowfei/gosfcore/debug
 > * debug工具，支持断点，打印参数结构信息
