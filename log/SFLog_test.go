@@ -6,6 +6,44 @@ import (
 	"time"
 )
 
+//	测试分组输出
+func TestLoggerGroup(t *testing.T) {
+	//	默认配置的json
+	config := `
+		{
+			"InitAppenders":[
+				"console"
+			],
+			"LogGroups" :{
+				"testGroup" :{
+					"Appender":[
+						"console"
+					],
+					"none":false,
+					"ConsolePattern":"${LOG_GROUP}:---:${MSG}"
+				},
+				"globalGroup" :{
+					"Appender":[
+						"console"
+					],
+					"none":false,
+					"ConsolePattern":"updateGlobal ${LOG_TAG}:---:${MSG}"
+				}
+			}
+		}
+	`
+
+	StartLogManager(3000)
+	LoadConfigByJson([]byte(config))
+	log := NewLoggerByGroup("tag", "testGroup")
+	log.Info("out info...")
+
+	grouplog := NewLogger("grouplog")
+	grouplog.Info("glogtag info...")
+
+	time.Sleep(time.Duration(3) * time.Second)
+}
+
 // 测试日志
 func TestLogger(t *testing.T) {
 	//	开启日志管理

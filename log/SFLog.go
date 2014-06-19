@@ -3,7 +3,7 @@
 //	Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-08-24
-//  Update on 2013-11-05
+//  Update on 2014-06-13
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -499,7 +499,7 @@ func (lm *LogManager) msgHandle(msg *LogMsg) {
 	var config LogConfig
 	var ok bool
 
-	if config, ok = _sharedLogConfig.LogGroups[msg.logTag]; !ok {
+	if config, ok = _sharedLogConfig.LogGroups[msg.logGroup]; !ok {
 		//	找不到目标配置使用全局配置
 		if config, ok = _sharedLogConfig.LogGroups[KEY_GLOBAL_GROUP_LOG_CONFIG]; !ok {
 			return
