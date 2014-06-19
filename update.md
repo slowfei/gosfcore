@@ -1,6 +1,14 @@
 gosfcore update log
 =============
 
+2014-06-19
+1. /src/github.com/slowfei/gosfcore/utils/strings/SFStringsUtil.go
+> * 增加ToLower(...)  ToUpper(...)
+
+2014-06-13
+1. /src/github.com/slowfei/gosfcore/log/SFLog.go
+> * 修改查找日志分组输出的bug，并添加分组测试
+
 2014-05-28
 1. /src/github.com/slowfei/gosfcore/utils/filemanager/SFFileManager.go
 > * 增加获取当前命令行目录函数GetCmdDir()
