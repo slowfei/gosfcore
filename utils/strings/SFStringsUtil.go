@@ -3,7 +3,7 @@
 //	Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-9-2
-//  Update on 2013-10-17
+//  Update on 2014-06-19
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -68,4 +68,41 @@ func Reverse(s string) string {
 //	@hex
 func DecHexString(hex byte) string {
 	return _decHexCharDigits[hex]
+}
+
+/**
+ *	to lower
+ *	由于strings.ToLower()有性能问题，所以自定义出来
+ *
+ *	@param s
+ *	@return lower string
+ */
+func ToLower(s string) string {
+	b := make([]byte, len(s))
+	for i := range b {
+		c := s[i]
+		if c >= 'A' && c <= 'Z' {
+			c += 'a' - 'A'
+		}
+		b[i] = c
+	}
+	return string(b)
+}
+
+/**
+ *	to upper
+ *
+ *	@param s
+ *	@return upper string
+ */
+func ToUpper(s string) string {
+	b := make([]byte, len(s))
+	for i := range b {
+		c := s[i]
+		if c >= 'a' && c <= 'z' {
+			c -= 'a' - 'A'
+		}
+		b[i] = c
+	}
+	return string(b)
 }
