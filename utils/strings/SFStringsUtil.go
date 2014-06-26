@@ -3,7 +3,7 @@
 //	Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-9-2
-//  Update on 2014-06-19
+//  Update on 2014-06-26
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -13,6 +13,7 @@
 package SFStringsUtil
 
 var (
+
 	// xvalues returns the value of a byte as a hexadecimal digit or 255.
 	_xvalues = []byte{
 		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
