@@ -106,9 +106,7 @@ func (j *Json) RawData() interface{} {
 //	将json解析为需要的结构或map
 //	目前使用的是go内置的解析
 //	@jsonByte
-//	@v			需要地址引用传递，并且类型是slice
-//				jsonMap 	[]map[string]string
-//				jsonStruct	[]Struct
+//	@v			需要地址引用传递
 func Unmarshal(jsonByte []byte, v interface{}) error {
 	return json.Unmarshal(jsonByte, v)
 }

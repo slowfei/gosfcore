@@ -1,6 +1,7 @@
 package SFJson
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 )
@@ -48,18 +49,18 @@ func TestMarshal(t *testing.T) {
 	sj.Type.TypeUUID = "sl_typeuuid"
 	sj.Married = false
 	sj.ArrayMap = make([]map[string]string, 2, 2)
-	sj.ArrayMap[0] = map[string]string{"AKey_1": "AValue_1", "AKey_1_1": "AValue_1_1"}
-	sj.ArrayMap[1] = map[string]string{"AKey_2": "AValue_2", "AKey_2_2": "AValue_2_2"}
+	sj.ArrayMap[0] = map[string]string{"AKey_1": "AValue_1"}
+	sj.ArrayMap[1] = map[string]string{"AKey_2": "AValue_2"}
 	sj.Array = []string{"arr_1", "arr_2", "arr_3"}
 
 	jb, err := Marshal(sj, "null", "true|false")
 	if nil != err {
 		fmt.Println(err)
 	}
-	if string(jb) != `{"Name":"slowfei","Sex":25,"Money":88888.888,"Type":{"TypeName":"sl_type","TypeUUID":"sl_typeuuid"},"Married":false,"ArrayMap":[{"AKey_1":"AValue_1","AKey_1_1":"AValue_1_1"},{"AKey_2":"AValue_2","AKey_2_2":"AValue_2_2"}],"Array":["arr_1","arr_2","arr_3"],"UID":null}` {
+	if string(jb) != `{"Name":"slowfei","Sex":25,"Money":88888.888,"Type":{"TypeName":"sl_type","TypeUUID":"sl_typeuuid"},"Married":false,"ArrayMap":[{"AKey_1":"AValue_1"},{"AKey_2":"AValue_2"}],"Array":["arr_1","arr_2","arr_3"],"UID":null}` {
 		t.Fail()
 	}
-	fmt.Println(string(jb))
+	// fmt.Println(string(jb))
 
 }
 
@@ -72,14 +73,55 @@ func TestJson(t *testing.T) {
 	sj.Type.TypeUUID = "sl_typeuuid"
 	sj.Married = false
 	sj.ArrayMap = make([]map[string]string, 2, 2)
+	sj.ArrayMap[0] = map[string]string{"AKey_1": "AValue_1"}
+	sj.ArrayMap[1] = map[string]string{"AKey_2": "AValue_2"}
+	sj.Array = []string{"arr_1", "arr_2", "arr_3"}
+
+	json, _ := NewJson(sj, "null", "")
+	if json.String() != `{"Name":"slowfei","Sex":25,"Money":88888.888,"Type":{"TypeName":"sl_type","TypeUUID":"sl_typeuuid"},"Married":false,"ArrayMap":[{"AKey_1":"AValue_1"},{"AKey_2":"AValue_2"}],"Array":["arr_1","arr_2","arr_3"],"UID":null}` {
+		t.Fail()
+	}
+	// fmt.Println(json.String())
+
+}
+
+func Benchmark_SFMarshal(b *testing.B) {
+	var sj StructJson
+	sj.Name = "slowfei"
+	sj.Sex = 25
+	sj.Money = 88888.888
+	sj.Type.TypeName = "sl_type"
+	sj.Type.TypeUUID = "sl_typeuuid"
+	sj.Married = false
+	sj.ArrayMap = make([]map[string]string, 2, 2)
 	sj.ArrayMap[0] = map[string]string{"AKey_1": "AValue_1", "AKey_1_1": "AValue_1_1"}
 	sj.ArrayMap[1] = map[string]string{"AKey_2": "AValue_2", "AKey_2_2": "AValue_2_2"}
 	sj.Array = []string{"arr_1", "arr_2", "arr_3"}
 
-	json, _ := NewJson(sj, "null", "")
-	if json.String() != `{"Name":"slowfei","Sex":25,"Money":88888.888,"Type":{"TypeName":"sl_type","TypeUUID":"sl_typeuuid"},"Married":false,"ArrayMap":[{"AKey_1":"AValue_1","AKey_1_1":"AValue_1_1"},{"AKey_2":"AValue_2","AKey_2_2":"AValue_2_2"}],"Array":["arr_1","arr_2","arr_3"],"UID":null}` {
-		t.Fail()
+	for i := 0; i < b.N; i++ {
+		_, err := Marshal(sj, "null", "")
+		if nil != err {
+			break
+		}
 	}
-	fmt.Println(json.String())
+}
+func Benchmark_GolangMarshal(b *testing.B) {
+	var sj StructJson
+	sj.Name = "slowfei"
+	sj.Sex = 25
+	sj.Money = 88888.888
+	sj.Type.TypeName = "sl_type"
+	sj.Type.TypeUUID = "sl_typeuuid"
+	sj.Married = false
+	sj.ArrayMap = make([]map[string]string, 2, 2)
+	sj.ArrayMap[0] = map[string]string{"AKey_1": "AValue_1", "AKey_1_1": "AValue_1_1"}
+	sj.ArrayMap[1] = map[string]string{"AKey_2": "AValue_2", "AKey_2_2": "AValue_2_2"}
+	sj.Array = []string{"arr_1", "arr_2", "arr_3"}
 
+	for i := 0; i < b.N; i++ {
+		_, err := json.Marshal(sj)
+		if nil != err {
+			break
+		}
+	}
 }
