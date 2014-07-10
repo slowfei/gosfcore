@@ -1,6 +1,10 @@
 gosfcore update log
 =============
 
+2014-07-11
+1. src/github.com/slowfei/gosfcore/helper/map.go
+> * NewMap修改为指针返回
+
 2014-06-19
 1. /src/github.com/slowfei/gosfcore/utils/strings/SFStringsUtil.go
 > * 增加ToLower(...)  ToUpper(...)

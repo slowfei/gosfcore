@@ -3,7 +3,7 @@
 //	Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-8-24
-//  Update on 2013-10-17
+//  Update on 2014-07-11
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -21,8 +21,8 @@ type Map struct {
 	thisMap map[interface{}]interface{}
 }
 
-func NewMap() Map {
-	return Map{thisMap: make(map[interface{}]interface{})}
+func NewMap() *Map {
+	return &Map{thisMap: make(map[interface{}]interface{})}
 }
 
 func (m *Map) Get(key interface{}) (interface{}, bool) {
