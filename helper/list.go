@@ -27,22 +27,6 @@ type Element struct {
 	Value interface{}
 }
 
-// Next returns the next list element or nil.
-func (e *Element) Next() *Element {
-	if p := e.next; e.list != nil && p != &e.list.root {
-		return p
-	}
-	return nil
-}
-
-// Prev returns the previous list element or nil.
-func (e *Element) Prev() *Element {
-	if p := e.prev; e.list != nil && p != &e.list.root {
-		return p
-	}
-	return nil
-}
-
 //	TODO update source 修改后的方法，目前还不知道这样会有什么弊端
 //	看google后期添加不添加此方法了。
 func (e *Element) Remove() interface{} {
@@ -67,6 +51,22 @@ func (e *Element) MoveToBack() {
 	}
 }
 
+// Next returns the next list element or nil.
+func (e *Element) Next() *Element {
+	if p := e.next; e.list != nil && p != &e.list.root {
+		return p
+	}
+	return nil
+}
+
+// Prev returns the previous list element or nil.
+func (e *Element) Prev() *Element {
+	if p := e.prev; e.list != nil && p != &e.list.root {
+		return p
+	}
+	return nil
+}
+
 // List represents a doubly linked list.
 // The zero value for List is an empty list ready to use.
 type List struct {
@@ -89,7 +89,7 @@ func New() *List { return new(List).Init() }
 // The complexity is O(1).
 func (l *List) Len() int { return l.len }
 
-// Front returns the first element of list l or nil
+// Front returns the first element of list l or nil.
 func (l *List) Front() *Element {
 	if l.len == 0 {
 		return nil
@@ -204,18 +204,18 @@ func (l *List) MoveToBack(e *Element) {
 }
 
 // MoveBefore moves element e to its new position before mark.
-// If e is not an element of l, or e == mark, the list is not modified.
+// If e or mark is not an element of l, or e == mark, the list is not modified.
 func (l *List) MoveBefore(e, mark *Element) {
-	if e.list != l || e == mark {
+	if e.list != l || e == mark || mark.list != l {
 		return
 	}
 	l.insert(l.remove(e), mark.prev)
 }
 
 // MoveAfter moves element e to its new position after mark.
-// If e is not an element of l, or e == mark, the list is not modified.
+// If e or mark is not an element of l, or e == mark, the list is not modified.
 func (l *List) MoveAfter(e, mark *Element) {
-	if e.list != l || e == mark {
+	if e.list != l || e == mark || mark.list != l {
 		return
 	}
 	l.insert(l.remove(e), mark)
