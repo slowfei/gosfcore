@@ -68,6 +68,7 @@ func TestPrintValue(t *testing.T) {
 
 	m3 := make(map[string]interface{})
 	m3["k7"] = "temp7"
+	m3["k9"] = make([]interface{}, 0)
 
 	m2 := make(map[string]interface{})
 	m2["k6"] = "temp"

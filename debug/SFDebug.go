@@ -3,7 +3,7 @@
 //	Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-11-01
-//  Update on 2013-11-18
+//  Update on 2014-07-21
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -80,6 +80,7 @@ func Fdump(out io.Writer, format bool, v ...interface{}) {
 		outBuf.WriteByte('\n')
 	}
 	outBuf.WriteByte('}')
+	outBuf.WriteByte('\n')
 	outBuf.WriteTo(out)
 }
 
@@ -174,7 +175,11 @@ func printReflectValue(format bool, level int, outBuf *bytes.Buffer, v reflect.V
 			if -1 >= reTabIndex {
 				reTabIndex = len(tab)
 			}
-			outBuf.WriteString("\n" + tab[0:reTabIndex] + "}")
+			if 0 == kcount {
+				outBuf.WriteByte('}')
+			} else {
+				outBuf.WriteString("\n" + tab[0:reTabIndex] + "}")
+			}
 		} else {
 			outBuf.WriteByte('}')
 		}
@@ -231,7 +236,12 @@ func printReflectValue(format bool, level int, outBuf *bytes.Buffer, v reflect.V
 			if -1 >= reTabIndex {
 				reTabIndex = len(tab)
 			}
-			outBuf.WriteString("\n" + tab[:reTabIndex] + "]")
+			if 0 == n {
+				outBuf.WriteByte(']')
+			} else {
+				outBuf.WriteString("\n" + tab[:reTabIndex] + "]")
+			}
+
 		} else {
 			outBuf.WriteByte(']')
 		}
