@@ -24,6 +24,47 @@ type StructJson struct {
 	}
 }
 
+func TestValidateMap(t *testing.T) {
+	jsonObject := `
+		{
+			"Name"	: "slowfei",
+			"Sex"	: 1,
+			"Money"	: 88888.888,
+			"Type"	: {
+				"TypeName"	: "sl_type",
+				"TypeUUID"	: "sl_typeuuid"
+			},
+			"Married":false,
+			"ArrayMap":[
+				{ "AKey_1" : "AValue_1" },
+				{ "AKey_2" : "AValue_2" }
+			],
+			"Array":[ "arr_1", "arr_2", "arr_3"],
+			"UID":null,
+			"Mapnil":{}
+		}`
+
+	// jsonArray := `
+	// ["Name1","Name2"]
+	// `
+
+	var object interface{} = nil
+	err := Unmarshal([]byte(jsonObject), &object)
+
+	if nil != err {
+		t.Error(err)
+		return
+	}
+
+	switch v := object.(type) {
+	case map[string]interface{}:
+		t.Logf("%T", v)
+		t.Logf("ArrayMap: %T", v["ArrayMap"])
+	default:
+		t.Fail()
+	}
+}
+
 //	测试创建空json对象
 func TestJsonNewNil(t *testing.T) {
 	arrayNil := NewJsonNil(true)
