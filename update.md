@@ -4,7 +4,7 @@ gosfcore update log
 2014-08-25
 1. src/github.com/slowfei/gosfcore/encoding/json/SFJson.go
 > * 修改注释
-> * 增加 map、array的类型子对象验证，支持嵌套验证。
+> * 增加 map、array的类型子对象验证，支持嵌套验证(已进行测试)
 
 2014-07-11
 1. src/github.com/slowfei/gosfcore/helper/map.go
