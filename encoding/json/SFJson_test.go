@@ -25,6 +25,7 @@ type StructJson struct {
 }
 
 func TestValidateMap(t *testing.T) {
+
 	jsonObject := `
 		{
 			"Name"	: "slowfei",
@@ -50,18 +51,33 @@ func TestValidateMap(t *testing.T) {
 
 	var object interface{} = nil
 	err := Unmarshal([]byte(jsonObject), &object)
-
 	if nil != err {
 		t.Error(err)
 		return
 	}
 
-	switch v := object.(type) {
-	case map[string]interface{}:
-		t.Logf("%T", v)
-		t.Logf("ArrayMap: %T", v["ArrayMap"])
-	default:
-		t.Fail()
+	result := ValidateMap(object, map[string]interface{}{
+		"Name":  TypeNotnilString,
+		"Sex":   TypeFloat,
+		"Money": TypeFloat,
+		"Type": map[string]interface{}{
+			"TypeName": TypeNotnilString,
+			"TypeUUID": TypeString,
+		},
+		"Married": TypeBool,
+		"ArrayMap": []interface{}{
+			map[string]interface{}{"AKey_1": TypeNotnilString},
+			map[string]interface{}{"AKey_2": TypeString},
+		},
+		"Array": []DataTypeNotnil{
+			TypeNotnilString,
+		},
+		"UID":    TypeString,
+		"Mapnil": TypeMap,
+	})
+
+	if !result {
+		t.Fatal("json validate fatal.")
 	}
 }
 

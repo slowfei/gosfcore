@@ -3,7 +3,7 @@
 //  Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-8-25
-//  Update on 2014-08-25
+//  Update on 2014-08-26
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/slowfei/gosfcore/utils/reflect"
+	"github.com/slowfei/gosfcore/utils/strings"
 	"math"
 	"reflect"
 	"strconv"
@@ -370,7 +371,13 @@ func ValidateMap(jsonMap interface{}, validData map[string]interface{}) bool {
 	case map[string]interface{}:
 		for key, validObj := range validData {
 
-			if object, ok := v[key]; ok {
+			object, ok := v[key]
+
+			if !ok {
+				object, ok = v[SFStringsUtil.ToLower(key)]
+			}
+
+			if ok {
 
 				if !validateObject(object, validObj) {
 					return false
