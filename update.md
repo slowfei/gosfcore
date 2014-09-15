@@ -1,6 +1,10 @@
 gosfcore update log
 =============
 
+2014-09-16
+1. src/github.com/slowfei/gosfcore/utils/strings/SFStringsUtil.go
+> *增加string ToInt8、ToInt16、ToInt32、ToInt、ToInt64
+
 2014-08-25
 1. src/github.com/slowfei/gosfcore/encoding/json/SFJson.go
 > * 修改注释
