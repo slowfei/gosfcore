@@ -2,8 +2,8 @@
 //
 //  Software Source Code License Agreement (BSD License)
 //
-//  Create on 2013-8-25
-//  Update on 2014-08-26
+//  Create on 2013-08-25
+//  Update on 2014-09-19
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -16,6 +16,7 @@ import (
 	"errors"
 	"github.com/slowfei/gosfcore/utils/reflect"
 	"github.com/slowfei/gosfcore/utils/strings"
+	"io/ioutil"
 	"math"
 	"reflect"
 	"strconv"
@@ -143,11 +144,50 @@ func (j *Json) String() string {
  *
  *  @return
  */
-func (j *Json) Byte() []byte {
-	if 0 >= j.analyzedBuf.Len() {
+func (j *Json) Bytes() []byte {
+	if 0 == j.analyzedBuf.Len() {
 		return nil
 	}
 	return j.analyzedBuf.Bytes()
+}
+
+/**
+ *	to json format bytes
+ *
+ *	@return
+ */
+func (j *Json) BytesFormat() []byte {
+
+	if 0 == j.analyzedBuf.Len() {
+		return nil
+	}
+
+	var formatBuf bytes.Buffer
+	err := json.Indent(&formatBuf, j.analyzedBuf.Bytes(), "", "\t")
+
+	if nil != err {
+		return nil
+	}
+
+	return formatBuf.Bytes()
+}
+
+/**
+ *
+ *	@param `path`	output file path
+ *	@param `format` whether format output
+ */
+func (j *Json) WriteFilepath(path string, format bool) error {
+
+	var data []byte = nil
+
+	if format {
+		data = j.BytesFormat()
+	} else {
+		data = j.Bytes()
+	}
+
+	return ioutil.WriteFile(path, data, 0660)
 }
 
 /**

@@ -1,9 +1,13 @@
 gosfcore update log
 =============
 
+2014-09-19
+1. src/github.com/slowfei/gosfcore/encoding/json/SFJson.go
+> * 增加bytes的格式化函数和json文件的输出函数
+
 2014-09-16
 1. src/github.com/slowfei/gosfcore/utils/strings/SFStringsUtil.go
-> *增加string ToInt8、ToInt16、ToInt32、ToInt、ToInt64
+> * 增加string ToInt8、ToInt16、ToInt32、ToInt、ToInt64
 
 2014-08-25
 1. src/github.com/slowfei/gosfcore/encoding/json/SFJson.go
