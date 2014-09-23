@@ -1,6 +1,10 @@
 gosfcore update log
 =============
 
+2014-09-23
+1. /src/github.com/slowfei/gosfcore/log/file.go
+> * 修正file.go对保存路径的操作
+
 2014-09-19
 1. src/github.com/slowfei/gosfcore/encoding/json/SFJson.go
 > * 增加bytes的格式化函数和json文件的输出函数

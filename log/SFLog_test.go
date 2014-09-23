@@ -6,6 +6,41 @@ import (
 	"time"
 )
 
+func TestFileOut(t *testing.T) {
+	//	默认配置的json
+	config := `
+		{
+			"InitAppenders":[
+				"file"
+			],
+			"LogGroups" :{
+				"FileGroup" :{
+					"Appender":[
+						"file"
+					],
+					"FileName":"${yy}${MM}${dd}.log",
+					"FileSavePath":"/Users/slowfei/Downloads/test/log",
+					"FilePattern":"${yyyy}-${MM}-${dd} ${mm}:${dd}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}",
+					"FileMaxSize":5242880,
+					"FileSameNameMaxNum":5000
+				}
+			}
+		}
+	`
+
+	StartLogManager(3000)
+	err := LoadConfigByJson([]byte(config))
+	if nil != err {
+		t.Error(err)
+		return
+	}
+
+	log := NewLoggerByGroup("tag", "FileGroup")
+	log.Info("file out info...")
+
+	time.Sleep(time.Duration(3) * time.Second)
+}
+
 //	测试分组输出
 func TestLoggerGroup(t *testing.T) {
 	//	默认配置的json

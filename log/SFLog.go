@@ -101,10 +101,10 @@
 //					"FilePattern":"${yyyy}-${MM}-${dd} ${mm}:${dd}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}",
 //
 //					//	文件最大存储大小，默认5M
-//					"FileMaxSize":"5242880",
+//					"FileMaxSize":5242880,
 //
 //					//	日志相同名称的最大数量，例如file(1).log...file(1000).log。默认1000，超出建立的数量将不会创建日志文件
-//					"FileSameNameMaxNum":"1000",
+//					"FileSameNameMaxNum":1000,
 //
 //
 //					/* ------------html配置--------------- */
@@ -122,10 +122,10 @@
 //					"HtmlTimeFormat":"yyyy-MM-dd hh:mm",
 //
 //					//	文件最大存储大小，默认3M
-//					"HtmlMaxSize":"3145728",
+//					"HtmlMaxSize":3145728,
 //
 //					//	与file配置相同
-//					"HtmlSameNameMaxNum":"1000",
+//					"HtmlSameNameMaxNum":1000,
 //
 //
 //					/* ------------email配置--------------- */
@@ -175,8 +175,8 @@
 //						"FileName":"info-${yy}-${MM}-${dd}.log",
 //						"FileSavePath":"",
 //						"FilePattern":"${yyyy}-${MM}-${dd} ${mm}:${dd}:${ss}${SSSSSS} [${TARGET}] ([${LOG_GROUP}][${LOG_TAG}][L${FILE_LINE} ${FUNC_NAME}])\n${MSG}",
-//						"FileMaxSize":"5242880",
-//						"FileSameNameMaxNum":"1000"
+//						"FileMaxSize":5242880"
+//						"FileSameNameMaxNum":1000
 //					},
 //					"error":{
 //						"Appender":[
@@ -186,8 +186,8 @@
 //						"HtmlSavePath":"",
 //						"HtmlTitle":"LogInfo",
 //						"HtmlTimeFormat":"yyyy-MM-dd hh:mm",
-//						"HtmlMaxSize":"3145728",
-//						"HtmlSameNameMaxNum":"1000",
+//						"HtmlMaxSize":3145728,
+//						"HtmlSameNameMaxNum":1000,
 //					},
 //					"warn":{
 //						"Appender":[

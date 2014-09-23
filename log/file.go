@@ -3,7 +3,7 @@
 //	Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-10-31
-//  Update on 2013-11-05
+//  Update on 2014-09-23
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -81,9 +81,6 @@ func (af *AppenderFile) getFile(savePath, fileName string, t time.Time, maxSize 
 	if 0 >= sameMaxNum {
 		sameMaxNum = af.defaultSameMaxNum
 	}
-	if 0 == len(savePath) {
-		savePath = af.excePath
-	}
 
 	opfName = SFTimeUtil.YMDHMSSSignFormat(t, fileName)
 
@@ -108,10 +105,24 @@ func (af *AppenderFile) getFile(savePath, fileName string, t time.Time, maxSize 
 		}
 	}
 
-	oppath := filepath.Join(savePath, opfName)
+	var oppath string
+	if 0 == len(savePath) {
+		oppath = filepath.Join(af.excePath, opfName)
+	} else if filepath.IsAbs(savePath) {
+		oppath = filepath.Join(savePath, opfName)
+	} else {
+		oppath = filepath.Join(af.excePath, savePath, opfName)
+	}
+
 	fileInfo, err := os.Stat(oppath)
 
-	if nil == err {
+	if nil == err && nil != fileInfo {
+
+		if fileInfo.IsDir() {
+			fmt.Println("path conflict: ", oppath)
+			return nil
+		}
+
 		if fileInfo.Size() >= maxSize {
 			var errExists error = nil
 			isReturn := true
@@ -135,7 +146,22 @@ func (af *AppenderFile) getFile(savePath, fileName string, t time.Time, maxSize 
 			}
 
 		}
+	} else {
+		//	 寻找不到文件，验证目录是否存在，不存在则需要创建目录
+		pathDir := filepath.Dir(oppath)
+
+		dirInfo, dirErr := os.Stat(pathDir)
+		if nil != dirErr || nil == dirInfo {
+			mkdirErr := os.MkdirAll(pathDir, os.ModePerm)
+			if nil != mkdirErr {
+				fmt.Println("unable to create log directory: ", pathDir)
+				fmt.Println(mkdirErr.Error())
+				return nil
+			}
+		}
+
 	}
+
 	// flag可选值：
 	// O_RDONLY int = os.O_RDONLY // 只读
 	// O_WRONLY int = os.O_WRONLY // 只写
