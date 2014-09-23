@@ -3,7 +3,7 @@
 //	Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-10-17
-//  Update on 2013-10-22
+//  Update on 2014-09-23
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -184,7 +184,7 @@ type TargetConfigInfo struct {
 
 //	appender none
 type AppenderNoneConfig struct {
-	None bool
+	None bool `json:none`
 }
 
 //	appender mongodb
