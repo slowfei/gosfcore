@@ -1,8 +1,15 @@
 gosfcore update log
 =============
 
+2014-09-25
+1. src/github.com/slowfei/gosfcore/utils/filemanager/SFFileManager.go
+> * 增加文件输出函数WirteFilepath(...)
+1. src/github.com/slowfei/gosfcore/encoding/json/SFJson.go
+> * 修正文件输出，使用SFFileManager.WirteFilepath
+
+
 2014-09-23
-1. /src/github.com/slowfei/gosfcore/log/file.go
+1. src/github.com/slowfei/gosfcore/log/file.go
 > * 修正file.go对保存路径的操作
 
 2014-09-19

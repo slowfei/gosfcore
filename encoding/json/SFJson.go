@@ -3,7 +3,7 @@
 //  Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-08-25
-//  Update on 2014-09-19
+//  Update on 2014-09-25
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -14,9 +14,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/slowfei/gosfcore/utils/filemanager"
 	"github.com/slowfei/gosfcore/utils/reflect"
 	"github.com/slowfei/gosfcore/utils/strings"
-	"io/ioutil"
 	"math"
 	"reflect"
 	"strconv"
@@ -187,7 +187,7 @@ func (j *Json) WriteFilepath(path string, format bool) error {
 		data = j.Bytes()
 	}
 
-	return ioutil.WriteFile(path, data, 0660)
+	return SFFileManager.WirteFilepath(path, data)
 }
 
 /**

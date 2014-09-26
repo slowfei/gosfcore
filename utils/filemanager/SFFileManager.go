@@ -3,7 +3,7 @@
 //	Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-08-24
-//  Update on 2014-05-27
+//  Update on 2014-09-25
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -13,6 +13,8 @@
 package SFFileManager
 
 import (
+	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,7 +28,50 @@ var (
 
 	//	文件重命名规则的正则
 	_rexRenameRule = regexp.MustCompile("\\(\\d+\\)")
+
+	ErrPathConflict = errors.New("Path conflict.")
 )
+
+/**
+ *	output file	auto mkdir all
+ *
+ *	@param `path` file path
+ *	@param `data` out data
+ *	@return
+ */
+func WirteFilepath(path string, data []byte) error {
+
+	// create directory
+	dirPath := filepath.Dir(path)
+
+	exists, isDir, dirErr := Exists(path)
+
+	if nil != dirErr {
+		return dirErr
+	} else if !exists {
+		mkErr := os.MkdirAll(dirPath, os.ModePerm)
+		if nil != mkErr {
+			return mkErr
+		}
+	} else if isDir {
+		return ErrPathConflict
+	}
+
+	//	wiete file
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0660)
+	if err != nil {
+		return err
+	}
+	n, err := f.Write(data)
+	if err == nil && n < len(data) {
+		err = io.ErrShortWrite
+	}
+	if err1 := f.Close(); err == nil {
+		err = err1
+	}
+
+	return err
+}
 
 /**
  *	获取当前命令行目录
