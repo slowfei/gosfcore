@@ -3,7 +3,7 @@
 //	Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-08-24
-//  Update on 2014-09-25
+//  Update on 2014-11-05
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -14,6 +14,7 @@ package SFFileManager
 
 import (
 	"errors"
+	// "fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -44,11 +45,9 @@ func WirteFilepath(path string, data []byte) error {
 	// create directory
 	dirPath := filepath.Dir(path)
 
-	exists, isDir, dirErr := Exists(path)
+	exists, isDir, _ := Exists(path)
 
-	if nil != dirErr {
-		return dirErr
-	} else if !exists {
+	if !exists {
 		mkErr := os.MkdirAll(dirPath, os.ModePerm)
 		if nil != mkErr {
 			return mkErr

@@ -6,6 +6,15 @@ import (
 	"time"
 )
 
+func TestWirteFilepath(t *testing.T) {
+	content := []byte("test content")
+
+	err := WirteFilepath("/Users/slowfei/Downloads/test/testgodoc/doc/md/default/testgodoc/help/help.md", content)
+	if nil != err {
+		t.Error(err)
+	}
+}
+
 //	测试获取命令行目录
 func TestGetCmdDir(t *testing.T) {
 	fmt.Println("GetCmdDir: " + GetCmdDir())

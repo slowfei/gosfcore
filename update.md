@@ -1,6 +1,10 @@
 gosfcore update log
 =============
 
+2014-11-06
+1. src/github.com/slowfei/gosfcore/utils/filemanager/SFFileManager.go
+> * 修正WirteFilepath在没有创建目录情况下的问题
+
 2014-09-25
 1. src/github.com/slowfei/gosfcore/utils/filemanager/SFFileManager.go
 > * 增加文件输出函数WirteFilepath(...)
