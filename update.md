@@ -1,6 +1,15 @@
 gosfcore update log
 =============
 
+2015-01-20
+1. src/github.com/slowfei/gosfcore/utils/filemanager/SFFileManager.go
+> * 增加GOPATH的获取
+
+2015-01-13
+1. src/github.com/slowfei/gosfcore/utils/sub/SFSubUtil.go
+> * 建立截取工具
+> * 增加嵌套数据的截取工作例如"{"截取的所有数据"}"
+
 2014-11-06
 1. src/github.com/slowfei/gosfcore/utils/filemanager/SFFileManager.go
 > * 修正WirteFilepath在没有创建目录情况下的问题

@@ -3,7 +3,7 @@
 //	Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-08-24
-//  Update on 2014-11-05
+//  Update on 2015-01-20
 //  Email  slowfei@foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -94,6 +94,22 @@ func GetCmdDir() string {
  */
 func GetExecDir() string {
 	return filepath.Dir(GetExecFilePath())
+}
+
+/**
+ *	获取 GOPATH 的多项路径
+ *
+ *	@return
+ */
+func GetGOPATHDirs() []string {
+	var result []string = nil
+	gopath := os.Getenv("GOPATH")
+
+	if 0 != len(gopath) {
+		result = filepath.SplitList(gopath)
+	}
+
+	return result
 }
 
 /**
