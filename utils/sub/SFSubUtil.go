@@ -3,7 +3,7 @@
 //  Copyright (c) 2014 slowfei
 //
 //  Create on 2014-12-16
-//  Update on 2015-01-20
+//  Update on 2015-02-27
 //  Email  slowfei(#)foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -54,10 +54,11 @@ func NewSubNest(start, end []byte) *SubNest {
 /**
  *  private bytes all index
  *
- *  @param `number` find number -1 is all
- *	@param `outBetweens` rule out between index, [0]=10 [1]=20, 10-20 position will rule out scanning
+ *	@param `startFindIndex` buffer start find index
+ *  @param `number` 		find number -1 is all
+ *	@param `outBetweens` 	rule out between index, [0]=10 [1]=20, 10-20 position will rule out scanning
  */
-func (nest *SubNest) bytesToIndex(src []byte, number int, outBetweens [][]int) [][]int {
+func (nest *SubNest) bytesToIndex(startFindIndex int, src []byte, number int, outBetweens [][]int) [][]int {
 	srcLen := len(src)
 	if 0 == srcLen || 0 == number {
 		return nil
@@ -80,7 +81,7 @@ func (nest *SubNest) bytesToIndex(src []byte, number int, outBetweens [][]int) [
 	endIndex := -1   // 结尾坐标
 	process := findPcsStart
 
-	tempSrc := src[:srcLen]
+	tempSrc := src[startFindIndex:srcLen]
 	tempSrcLen := len(tempSrc)
 	tempStartI := 0   // 开始坐标临时存储
 	tempEndI := 0     // 结尾坐标
@@ -108,24 +109,7 @@ func (nest *SubNest) bytesToIndex(src []byte, number int, outBetweens [][]int) [
 	for i := 0; i < tempSrcLen; i++ {
 		// 寻找开始坐标点
 
-		if findPcsStart == process {
-
-			of := bytes.Index(tempSrc[i:], start)
-			if 0 > of {
-				break
-			}
-
-			i += of
-
-			if !isEscape(tempSrc, i) && !isRuleOutIndex(outBetweens, i) {
-				startIndex = i
-				tempStartI = startIndex + 1
-				tempEndI = tempStartI
-				process = findPcsEnd
-				balanceCount++
-			}
-
-		} else if findPcsEnd == process {
+		if findPcsEnd == process {
 
 			ofEnd := bytes.Index(tempSrc[tempEndI:], end)
 
@@ -134,35 +118,69 @@ func (nest *SubNest) bytesToIndex(src []byte, number int, outBetweens [][]int) [
 			}
 			tempEndI += ofEnd
 
-			if !isEscape(tempSrc, tempEndI) && !isRuleOutIndex(outBetweens, tempEndI) {
+			//	查询到的结束符号需要判断是否是被过滤的，如果是被过滤的则跳过，继续下一个结束符的寻找。
+			if !isEscape(tempSrc, tempEndI) && !isRuleOutIndex(outBetweens, tempEndI+startFindIndex) {
 				balanceCount--
 				endIndex = tempEndI
 
-				ofStart := bytes.Index(tempSrc[tempStartI:], start)
-				tempStartI += ofStart
+				for {
+					//	由于考虑到如果查询到的字符属于过滤的，则需要再次寻找，否则过滤的字符会累加在内（balanceCount++）。
+					// n(循环周期)_n(balanceCount)
+					// {1_1 {2_1 {3_1 }2_0 }3_0 }4_0
+					// {1_1 {2_1 }2_0 {3_1 }3_0 {4_1 }4_0 }
 
-				// n(循环周期)_n(balanceCount)
-				// {1_1 {2_1 {3_1 }2_0 }3_0 }4_0
-				// {1_1 {2_1 }2_0 {3_1 }3_0 {4_1 }4_0 }
-				if 0 <= ofStart && tempEndI > tempStartI &&
-					!isEscape(tempSrc, tempStartI) && !isRuleOutIndex(outBetweens, tempStartI) {
-					balanceCount++
+					ofStart := bytes.Index(tempSrc[tempStartI:], start)
+					tempStartI += ofStart
+
+					if 0 > ofStart || tempEndI <= tempStartI {
+						break
+					}
+
+					if !isEscape(tempSrc, tempStartI) && !isRuleOutIndex(outBetweens, tempStartI+startFindIndex) {
+						balanceCount++
+						break
+					}
+
+					//	递加一个index，继续寻找
+					tempStartI++
 				}
 
+				//	由于在for中条件内break跳出时没有递加index,所以这里进行一次递加。
 				tempStartI++
+
 			}
 
 			tempEndI++
+
+		} else if findPcsStart == process {
+
+			of := bytes.Index(tempSrc[i:], start)
+			if 0 > of {
+				break
+			}
+
+			i += of
+
+			if !isEscape(tempSrc, i) && !isRuleOutIndex(outBetweens, i+startFindIndex) {
+				startIndex = i
+				tempStartI = startIndex + 1
+				tempEndI = tempStartI
+
+				process = findPcsEnd
+				balanceCount++
+			}
 		}
 
 		if 0 == balanceCount && -1 != startIndex && -1 != endIndex {
-			result = append(result, []int{startIndex, endIndex + 1})
+			//	结尾index需要加上结束符的长度
+			newEndIndex := endIndex + endLen
+			result = append(result, []int{startIndex, newEndIndex})
 
 			if len(result) == number {
 				break
 			}
-			i = endIndex
-			tempStartI = endIndex
+			i = newEndIndex
+			tempStartI = newEndIndex
 			tempEndI = tempStartI
 			startIndex = -1
 			endIndex = -1
@@ -176,12 +194,13 @@ func (nest *SubNest) bytesToIndex(src []byte, number int, outBetweens [][]int) [
 /**
  *  to source data subset target a index
  *
+ *	@param `startIndex` buffer start find index
  *  @param `src` source data
  *  @param `outBetweens` rule out between index, [0]=10 [1]=20, 10-20 position will rule out scanning
  *	@return first find result index []int{start int, end int}
  */
-func (nest *SubNest) BytesToIndex(src []byte, outBetweens [][]int) []int {
-	result := nest.bytesToIndex(src, 1, outBetweens)
+func (nest *SubNest) BytesToIndex(startIndex int, src []byte, outBetweens [][]int) []int {
+	result := nest.bytesToIndex(startIndex, src, 1, outBetweens)
 
 	if 0 != len(result) {
 		return result[0]
@@ -193,12 +212,13 @@ func (nest *SubNest) BytesToIndex(src []byte, outBetweens [][]int) []int {
 /**
  *  to source data target all index
  *
+ *	@param `startIndex` buffer start find index
  *  @param `src` source data
  *  @param `outBetweens` rule out between index, [0]=10 [1]=20, 10-20 position will rule out scanning
  *	@return all find result indexs [][]int{ []int{start index, end int}... }
  */
-func (nest *SubNest) BytesToAllIndex(src []byte, outBetweens [][]int) [][]int {
-	return nest.bytesToIndex(src, -1, outBetweens)
+func (nest *SubNest) BytesToAllIndex(startIndex int, src []byte, outBetweens [][]int) [][]int {
+	return nest.bytesToIndex(startIndex, src, -1, outBetweens)
 }
 
 /**

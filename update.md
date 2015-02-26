@@ -1,6 +1,11 @@
 gosfcore update log
 =============
 
+2015-02-27
+1. src/github.com/slowfei/gosfcore/utils/sub/SFSubUtil.go
+> * 修改：算法出现BUG，主要是出现过滤的字符没有重新查找。
+> * 修改：由于计算过滤(outBetweens)出现原数据的下标位，所以增加了开始查询下标的计算startIndex
+
 2015-01-20
 1. src/github.com/slowfei/gosfcore/utils/filemanager/SFFileManager.go
 > * 增加GOPATH的获取
