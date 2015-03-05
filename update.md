@@ -1,6 +1,10 @@
 gosfcore update log
 =============
 
+2015-03-06
+1. src/github.com/slowfei/gosfcore/utils/sub/SFSubUtil.go
+> * 修改：修复index计算的错误
+
 2015-02-27
 1. src/github.com/slowfei/gosfcore/utils/sub/SFSubUtil.go
 > * 修改：算法出现BUG，主要是出现过滤的字符没有重新查找。

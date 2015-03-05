@@ -3,7 +3,7 @@
 //  Copyright (c) 2014 slowfei
 //
 //  Create on 2014-12-16
-//  Update on 2015-02-27
+//  Update on 2015-03-06
 //  Email  slowfei(#)foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -119,7 +119,7 @@ func (nest *SubNest) bytesToIndex(startFindIndex int, src []byte, number int, ou
 			tempEndI += ofEnd
 
 			//	查询到的结束符号需要判断是否是被过滤的，如果是被过滤的则跳过，继续下一个结束符的寻找。
-			if !isEscape(tempSrc, tempEndI) && !isRuleOutIndex(outBetweens, tempEndI+startFindIndex) {
+			if !isEscape(tempSrc, tempEndI) && !isRuleOutIndex(outBetweens, tempEndI+startFindIndex, endLen) {
 				balanceCount--
 				endIndex = tempEndI
 
@@ -136,7 +136,7 @@ func (nest *SubNest) bytesToIndex(startFindIndex int, src []byte, number int, ou
 						break
 					}
 
-					if !isEscape(tempSrc, tempStartI) && !isRuleOutIndex(outBetweens, tempStartI+startFindIndex) {
+					if !isEscape(tempSrc, tempStartI) && !isRuleOutIndex(outBetweens, tempStartI+startFindIndex, startLen) {
 						balanceCount++
 						break
 					}
@@ -161,7 +161,7 @@ func (nest *SubNest) bytesToIndex(startFindIndex int, src []byte, number int, ou
 
 			i += of
 
-			if !isEscape(tempSrc, i) && !isRuleOutIndex(outBetweens, i+startFindIndex) {
+			if !isEscape(tempSrc, i) && !isRuleOutIndex(outBetweens, i+startFindIndex, startLen) {
 				startIndex = i
 				tempStartI = startIndex + 1
 				tempEndI = tempStartI
@@ -179,7 +179,7 @@ func (nest *SubNest) bytesToIndex(startFindIndex int, src []byte, number int, ou
 			if len(result) == number {
 				break
 			}
-			i = newEndIndex
+			i = endIndex
 			tempStartI = newEndIndex
 			tempEndI = tempStartI
 			startIndex = -1
@@ -267,10 +267,11 @@ func isEscape(src []byte, index int) bool {
  *  index 是否在排除的范围内
  *
  *	@param `outBetweens` 排除坐标的范围值
- *	@param `index` 检测是否排除的下标
+ *	@param `index` 		 检测是否排除的下标
+ *	@param `symbolLen` 	 start or end symbol length. 避免相同的坐标排除
  *	@return true 表示在排除范围内
  */
-func isRuleOutIndex(outBetweens [][]int, index int) bool {
+func isRuleOutIndex(outBetweens [][]int, index int, symbolLen int) bool {
 	result := false
 
 	for i := 0; i < len(outBetweens); i++ {
@@ -278,7 +279,7 @@ func isRuleOutIndex(outBetweens [][]int, index int) bool {
 		if 2 == len(indexs) {
 			s := indexs[0]
 			e := indexs[1]
-			if index > s && index < e {
+			if index-symbolLen > s && index+symbolLen < e {
 				result = true
 				break
 			}
