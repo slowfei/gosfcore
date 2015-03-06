@@ -48,14 +48,16 @@ func Test_Debug(t *testing.T) {
 (
 	2345
 	(test)
+	"("
 )
 
-(890)
+((890))
 `)
 
 	var (
 		SNBetweens = []*SubNest{
 			NewSubNest([]byte(`(`), []byte(`)`)),
+			NewSubNest([]byte(`"`), []byte(`"`)),
 		}
 	)
 

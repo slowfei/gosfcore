@@ -54,7 +54,7 @@ func NewSubNest(start, end []byte) *SubNest {
 /**
  *  private bytes all index
  *
- *	@param `startFindIndex` buffer start find index
+ *	@param `startFindIndex` src start find location index, will be sum to the results
  *  @param `number` 		find number -1 is all
  *	@param `outBetweens` 	rule out between index, [0]=10 [1]=20, 10-20 position will rule out scanning
  */
@@ -174,7 +174,7 @@ func (nest *SubNest) bytesToIndex(startFindIndex int, src []byte, number int, ou
 		if 0 == balanceCount && -1 != startIndex && -1 != endIndex {
 			//	结尾index需要加上结束符的长度
 			newEndIndex := endIndex + endLen
-			result = append(result, []int{startIndex, newEndIndex})
+			result = append(result, []int{startIndex + startFindIndex, newEndIndex + startFindIndex})
 
 			if len(result) == number {
 				break
@@ -194,7 +194,7 @@ func (nest *SubNest) bytesToIndex(startFindIndex int, src []byte, number int, ou
 /**
  *  to source data subset target a index
  *
- *	@param `startIndex` buffer start find index
+ *	@param `startIndex` src start find location index, will be sum to the results
  *  @param `src` source data
  *  @param `outBetweens` rule out between index, [0]=10 [1]=20, 10-20 position will rule out scanning
  *	@return first find result index []int{start int, end int}
@@ -212,7 +212,7 @@ func (nest *SubNest) BytesToIndex(startIndex int, src []byte, outBetweens [][]in
 /**
  *  to source data target all index
  *
- *	@param `startIndex` buffer start find index
+ *	@param `startIndex` src start find location index, will be sum to the results
  *  @param `src` source data
  *  @param `outBetweens` rule out between index, [0]=10 [1]=20, 10-20 position will rule out scanning
  *	@return all find result indexs [][]int{ []int{start index, end int}... }
@@ -279,7 +279,7 @@ func isRuleOutIndex(outBetweens [][]int, index int, symbolLen int) bool {
 		if 2 == len(indexs) {
 			s := indexs[0]
 			e := indexs[1]
-			if index-symbolLen > s && index+symbolLen < e {
+			if index > s && index < e-symbolLen {
 				result = true
 				break
 			}

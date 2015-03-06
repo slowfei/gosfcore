@@ -3,7 +3,7 @@ gosfcore update log
 
 2015-03-06
 1. src/github.com/slowfei/gosfcore/utils/sub/SFSubUtil.go
-> * 修改：修复index计算的错误
+> * 修改：修复index计算的错误和startFindIndex与结果的相加
 
 2015-02-27
 1. src/github.com/slowfei/gosfcore/utils/sub/SFSubUtil.go
