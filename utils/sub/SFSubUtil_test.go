@@ -45,19 +45,36 @@ func Test_bytesToIndex(t *testing.T) {
 
 func Test_Debug(t *testing.T) {
 	testStr := []byte(`
-(
-	2345
-	(test)
-	"("
-)
+//  The MIT License (MIT) - http://opensource.org/licenses/MIT
+//
+//  Copyright (c) 2014 slowfei
+//
+//  Create on 2014-11-05
+//  Update on 2015-05-07
+//  Email  slowfei#foxmail.com
+//  Home   http://www.slowfei.com
 
-((890))
+// golang implement parser
+// temp
+package main3
+
+
+/**
+ *	test pacakage
+ *	test line2
+ *	temp late3
+ */
+package main1
+
+// test package
+// temp line2
+// temp3
+package main2
 `)
 
 	var (
 		SNBetweens = []*SubNest{
-			NewSubNest([]byte(`(`), []byte(`)`)),
-			NewSubNest([]byte(`"`), []byte(`"`)),
+			NewSubNotNest([]byte("//"), []byte("\n")),
 		}
 	)
 
@@ -70,14 +87,8 @@ func Test_Debug(t *testing.T) {
 	}
 	t.Log(outBetweens)
 
-	sub := NewSubNest([]byte("("), []byte(")"))
-	subIndex := 0
-	indexs := sub.bytesToIndex(0, testStr[subIndex:], -1, outBetweens)
-
-	for i := 0; i < len(indexs); i++ {
-		s := indexs[i][0]
-		e := indexs[i][1]
-		t.Log(string(testStr[s+subIndex : e+subIndex]))
+	for i := 0; i < len(outBetweens); i++ {
+		index := outBetweens[i]
+		t.Log(string(testStr[index[0]:index[1]]))
 	}
-
 }

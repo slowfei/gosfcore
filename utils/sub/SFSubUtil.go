@@ -3,7 +3,7 @@
 //  Copyright (c) 2014 slowfei
 //
 //  Create on 2014-12-16
-//  Update on 2015-03-06
+//  Update on 2015-05-15
 //  Email  slowfei(#)foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -37,8 +37,9 @@ const (
  *  (temp(temp2)()).... the irregular subset
  */
 type SubNest struct {
-	start []byte
-	end   []byte
+	start   []byte
+	end     []byte
+	notNest bool // default false
 }
 
 /**
@@ -48,7 +49,20 @@ type SubNest struct {
  *  @param `end`
  */
 func NewSubNest(start, end []byte) *SubNest {
-	return &SubNest{start, end}
+	return &SubNest{start, end, false}
+}
+
+/**
+ *  new not sub nest struct
+ *
+ *	find "(" content ")"
+ *  find content "( 1 2 (3 4 5) 6 7 8 )" or "// temp http://www.slowfei.com [\n]"
+ *
+ *	find result "( 1 2 (3 4 5)" or "// temp http://www.slowfei.com [\n]"
+ *
+ */
+func NewSubNotNest(start, end []byte) *SubNest {
+	return &SubNest{start, end, true}
 }
 
 /**
@@ -71,6 +85,7 @@ func (nest *SubNest) bytesToIndex(startFindIndex int, src []byte, number int, ou
 	startLen := len(start)
 	end := nest.end
 	endLen := len(end)
+	notNest := nest.notNest
 
 	if 0 == startLen || 0 == endLen {
 		return nil
@@ -123,26 +138,29 @@ func (nest *SubNest) bytesToIndex(startFindIndex int, src []byte, number int, ou
 				balanceCount--
 				endIndex = tempEndI
 
-				for {
-					//	由于考虑到如果查询到的字符属于过滤的，则需要再次寻找，否则过滤的字符会累加在内（balanceCount++）。
-					// n(循环周期)_n(balanceCount)
-					// {1_1 {2_1 {3_1 }2_0 }3_0 }4_0
-					// {1_1 {2_1 }2_0 {3_1 }3_0 {4_1 }4_0 }
+				// 看是否需要查询嵌套
+				if !notNest {
+					for {
+						//	由于考虑到如果查询到的字符属于过滤的，则需要再次寻找，否则过滤的字符会累加在内（balanceCount++）。
+						// n(循环周期)_n(balanceCount)
+						// {1_1 {2_1 {3_1 }2_0 }3_0 }4_0
+						// {1_1 {2_1 }2_0 {3_1 }3_0 {4_1 }4_0 }
 
-					ofStart := bytes.Index(tempSrc[tempStartI:], start)
-					tempStartI += ofStart
+						ofStart := bytes.Index(tempSrc[tempStartI:], start)
+						tempStartI += ofStart
 
-					if 0 > ofStart || tempEndI <= tempStartI {
-						break
+						if 0 > ofStart || tempEndI <= tempStartI {
+							break
+						}
+
+						if !isEscape(tempSrc, tempStartI) && !isRuleOutIndex(outBetweens, tempStartI+startFindIndex, startLen) {
+							balanceCount++
+							break
+						}
+
+						//	递加一个index，继续寻找
+						tempStartI++
 					}
-
-					if !isEscape(tempSrc, tempStartI) && !isRuleOutIndex(outBetweens, tempStartI+startFindIndex, startLen) {
-						balanceCount++
-						break
-					}
-
-					//	递加一个index，继续寻找
-					tempStartI++
 				}
 
 				//	由于在for中条件内break跳出时没有递加index,所以这里进行一次递加。

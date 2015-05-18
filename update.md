@@ -1,6 +1,10 @@
 gosfcore update log
 =============
 
+2015-05-15
+1. src/github.com/slowfei/gosfcore/utils/sub/SFSubUtil.go
+> * 修正：增加了一个不查找子级的一个控制（NewSubNotNest），这样便于查询"// comment http://slowfei.com/ " 这样的字符  
+
 2015-03-06
 1. src/github.com/slowfei/gosfcore/utils/sub/SFSubUtil.go
 > * 修改：修复index计算的错误和startFindIndex与结果的相加
