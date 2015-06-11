@@ -1,6 +1,11 @@
 gosfcore update log
 =============
 
+2015-06-12
+1. src/github.com/slowfei/gosfcore/utils/sub/SFSubUtil.go
+> * 增加：增加排除坐标的算法函数GetOutBetweens(...)...
+> * 修正：GetOutBetweens(...)编写此方法产生了很多BUG，还需要大量测试验证（目前的测试暂无问题）。
+
 2015-05-15
 1. src/github.com/slowfei/gosfcore/utils/sub/SFSubUtil.go
 > * 修正：增加了一个不查找子级的一个控制（NewSubNotNest），这样便于查询"// comment http://slowfei.com/ " 这样的字符  

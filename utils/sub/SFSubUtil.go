@@ -3,7 +3,7 @@
 //  Copyright (c) 2014 slowfei
 //
 //  Create on 2014-12-16
-//  Update on 2015-05-15
+//  Update on 2015-06-09
 //  Email  slowfei(#)foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -15,7 +15,7 @@ package SFSubUtil
 
 import (
 	"bytes"
-	// "fmt"
+	"fmt"
 )
 
 /**
@@ -237,6 +237,339 @@ func (nest *SubNest) BytesToIndex(startIndex int, src []byte, outBetweens [][]in
  */
 func (nest *SubNest) BytesToAllIndex(startIndex int, src []byte, outBetweens [][]int) [][]int {
 	return nest.bytesToIndex(startIndex, src, -1, outBetweens)
+}
+
+/**
+ *	get between rule out points
+ *
+ *	@param `src`   data source
+ *	@param `nests` SubNest object, sequence has a certain efect
+ *	@return data source points [0] is start point [1] is end point
+ */
+func GetOutBetweens(src []byte, nests ...*SubNest) [][]int {
+
+	nestsLen := len(nests)
+	srcLen := len(src)
+	if 0 == nestsLen || 0 == srcLen {
+		return nil
+	}
+
+	result := make([][]int, 0, 0)
+	filterNestIndex := make([]int, nestsLen, nestsLen)
+
+	for srcIndex := 0; srcIndex < srcLen; srcIndex++ {
+
+		// 获取首位的SubNest对象
+		tempIndex := -1
+		tempFirstPoint := srcLen
+		for i := 0; i < nestsLen; i++ {
+			filterNestIndex[i] = -1
+			nest := nests[i]
+			ti := bytes.Index(src[srcIndex:], nest.start)
+			if -1 != ti && tempFirstPoint > ti {
+				tempFirstPoint = ti
+				tempIndex = i
+			}
+		}
+		if -1 == tempIndex {
+			return result
+		}
+		tempFirstPoint += srcIndex
+		firstNest := nests[tempIndex]
+		filterNestIndex[0] = tempIndex
+
+		firstIndex := firstNest.BytesToIndex(srcIndex, src, nil)
+
+		if 2 != len(firstIndex) {
+			// fmt.Println("temp_0_0:", firstIndex, result, tempFirstPoint, string(firstNest.start), srcIndex)
+			// 如果走到这部表示 开始符号和结束符号 不对等，这能出现的问题就是开始符号的位置实在过滤的范围内。
+			// 所以需要找到下一个开始符号，效验是否是被过滤的，如果不是则认为是规则的格式错误。
+			var outBetweens [][]int = nil
+			outBetweensLen := 0
+			startLen := len(firstNest.start)
+			newSrcIndex := tempFirstPoint + startLen
+			tempSrcIndex := tempFirstPoint
+
+			checkIndex := bytes.Index(src[newSrcIndex:], firstNest.start)
+			if -1 == checkIndex {
+				return result
+			}
+			checkIndex += newSrcIndex
+
+			for {
+				// fmt.Println("TODO:", checkIndex, filterNestIndex)
+				checkBetweens := obCheckFilter(src, tempFirstPoint, checkIndex, nests, filterNestIndex)
+				outLen := len(checkBetweens)
+				// fmt.Println("TODO2:", checkBetweens)
+
+				if 0 != outLen {
+					// 记录效验获取的过滤参数最后一位的结尾数，避免是相同的过滤参数出现无限循环
+					outEndIndex := checkBetweens[outLen-1][1]
+					if 0 != outBetweensLen && outBetweens[outBetweensLen-1][1] >= outEndIndex {
+						break
+					}
+
+					outBetweens = append(outBetweens, checkBetweens...)
+					outBetweensLen = len(outBetweens)
+
+					firstIndex = firstNest.BytesToIndex(tempSrcIndex, src, outBetweens)
+					firstIndexLen := len(firstIndex)
+
+					// 如果效验的index小于过滤的内容则需要再次验证寻找
+					if 0 == firstIndexLen && outEndIndex < checkIndex {
+						tempFirstPoint = outEndIndex
+						continue
+					}
+				}
+
+				if 0 == len(firstIndex) {
+					// 如果出现多个嵌套符号，则需要继续验证下一个判断符，直到找到为止。如果格式错误会造成很大的资源浪费。
+					sliceIndex := checkIndex + startLen
+					nextCheckIndex := bytes.Index(src[sliceIndex:], firstNest.start)
+					if -1 != nextCheckIndex {
+						checkIndex = nextCheckIndex + sliceIndex
+						tempFirstPoint = sliceIndex
+						continue
+					}
+				}
+
+				break
+			}
+
+		}
+
+		if 2 == len(firstIndex) {
+			firstStart := firstIndex[0]
+			firestEnd := firstIndex[1]
+			checkStart := firstStart
+			tempOutEnd := -1
+			var outBetweens [][]int = nil
+
+			// 如果开始符号和结尾符号是相同的就直接添加，主要是相同的，嵌套的时候会判断转义符，会很少出现错误的验证。
+			isSame := bytes.Equal(firstNest.start, firstNest.end)
+			if isSame {
+				result = append(result, []int{firstStart, firestEnd})
+			}
+
+			tempi := 0 // 防止无限循环
+			for !isSame {
+				tempi++
+				if tempi >= 500 {
+					fmt.Println("Accident: infinite for error.....")
+					break
+				}
+
+				// fmt.Println("temp_0:", firstStart, firestEnd)
+				checkBetweens := obCheckFilter(src, checkStart, firestEnd, nests, filterNestIndex)
+				outLen := len(checkBetweens)
+
+				// 如果存在过滤项则需要再次寻找
+				if 0 != outLen {
+					outBetweens = append(outBetweens, checkBetweens...)
+					// 记录效验获取的过滤参数最后一位的结尾数，避免是相同的过滤参数出现无限循环
+					outEnd := checkBetweens[outLen-1][1]
+
+					// fmt.Println("temp_1:", outBetweens, firstStart, firestEnd)
+					newFirstIndex := firstNest.BytesToIndex(srcIndex, src, outBetweens)
+					if 2 != len(newFirstIndex) {
+						if outEnd == tempOutEnd {
+							break
+						}
+						// 此时就有可能是被下一行需要过滤的开头(firstNest.start)形成不对等的判断，导致查询异常，所以再次需要寻找开始符号。
+						ti := bytes.Index(src[outEnd:], firstNest.start)
+						if -1 == ti {
+							break
+						}
+
+						firestEnd = ti + outEnd
+						checkStart = outEnd
+					} else {
+						firestEnd = newFirstIndex[1]
+						checkStart = outEnd
+					}
+
+					tempOutEnd = outEnd
+
+					// fmt.Println("temp_2:", outBetweens, firstStart, firestEnd)
+				} else {
+					result = append(result, []int{firstStart, firestEnd})
+					break
+				}
+			} // ene for {
+
+			//
+			srcIndex = firestEnd - len(firstNest.end)
+
+		} else {
+			break
+		}
+	}
+
+	return result
+}
+
+/**
+ *	效验过滤范围结果，如果在otherNest所查询的范围内则返回该下标
+ *
+ *	@param `src`
+ *	@param `srcIndex`
+ *	@param `checkIndex` 需要效验的源数据下标
+ *	@param `otherNests`
+ *	@param `filterIndex`
+ *	@param `exceedAdd` 超出效验范围时，是否添加最后过滤项
+ *	@return `[][]int` OutBetweens 子集的所有过滤项
+ */
+func obCheckFilter(src []byte, srcIndex, checkIndex int, otherNests []*SubNest, filterIndex []int) [][]int {
+	var result [][]int = make([][]int, 0, 0)
+
+	if len(src) <= srcIndex {
+		return result
+	}
+
+	tempSrc := src[srcIndex:]
+	tempIndex := -1
+	// tempOutBetweens := make([][]int, 1, 1)
+	tempFirstPoint := len(tempSrc)
+	filterLen := len(filterIndex)
+
+	for i := 0; i < len(otherNests); i++ {
+		isFilter := false
+		for j := 0; j < filterLen; j++ {
+			fi := filterIndex[j]
+			if i == fi {
+				isFilter = true
+				break
+			}
+		}
+
+		if !isFilter {
+			otNest := otherNests[i]
+			ti := bytes.Index(tempSrc, otNest.start)
+			if -1 != ti && tempFirstPoint > ti {
+				tempFirstPoint = ti
+				tempIndex = i
+			}
+		}
+	}
+	// fmt.Println("-0.0.0", tempIndex, srcIndex, filterIndex)
+	if -1 == tempIndex {
+		return nil
+	}
+
+	tempFirstPoint += srcIndex
+	filterIndex = append(filterIndex, tempIndex)
+	firstNest := otherNests[tempIndex]
+	firstIndex := firstNest.BytesToIndex(tempFirstPoint, src, nil)
+
+	if 2 != len(firstIndex) {
+		// fmt.Println("-0.0:", result, firstIndex, checkIndex)
+
+		newSrcIndex := tempFirstPoint + len(firstNest.start)
+
+		ti := bytes.Index(src[newSrcIndex:], firstNest.start)
+		if -1 == ti {
+			return nil
+		}
+		ti += newSrcIndex
+
+		outBetweens := obCheckFilter(src, tempFirstPoint, ti, otherNests, filterIndex)
+
+		if 0 != len(outBetweens) {
+			result = append(result, outBetweens...)
+			firstIndex = firstNest.BytesToIndex(tempFirstPoint, src, result)
+		}
+		// fmt.Println("-0.1:", result, firstIndex, checkIndex)
+	}
+	// fmt.Println("-0:", result, firstIndex, checkIndex)
+	if 2 == len(firstIndex) {
+
+		firstStart := firstIndex[0]
+		firestEnd := firstIndex[1]
+		// fmt.Println("0: ", firstIndex)
+
+		tempi := 0
+		for {
+			tempi++
+			if tempi >= 500 {
+				fmt.Println("Accident: check filter infinite for error.....")
+				break
+			}
+
+			if checkIndex < firstStart {
+				// fmt.Println("0_1: ", firstIndex, result)
+				return result
+			}
+
+			// fmt.Println("1: ", firstIndex, firstStart, firestEnd, filterIndex)
+			// 效验子集的结尾下标是否又是被过滤的，所以进行递归查询
+			outBetweens := obCheckFilter(src, firstStart, firestEnd, otherNests, filterIndex)
+			outBetweensLen := len(outBetweens)
+			// 由于更改了该方法的放回参数，所以下面可能需要重构。
+			// fmt.Println("2: ", firstIndex, outBetweens, len(outBetweens), result)
+			// 效验无过滤时，则表示当前firstNest查找的结尾标识正确的，所以此时就需要判断是否效验下标是否在其范围内。
+			if 0 != outBetweensLen {
+
+				// 比较结尾的结果是否相同，如果相同则跳过，否则会出现无限循环
+				resultLen := len(result)
+				if 0 != resultLen {
+					resultEnd := result[resultLen-1]
+					outBetweenEnd := outBetweens[outBetweensLen-1]
+					if resultEnd[0] == outBetweenEnd[0] && resultEnd[1] == outBetweenEnd[1] {
+						break
+					}
+				}
+
+				// 被过滤继续查找正确的子集
+				result = append(result, outBetweens...)
+				// fmt.Println("2_1: ", firstIndex, result)
+				newFirstIndex := firstNest.BytesToIndex(firstStart, src, result)
+				if 2 != len(newFirstIndex) {
+					break
+				}
+				firestEnd = newFirstIndex[1]
+			} else {
+
+				// 如果效验下标在子集的范围内，则返回子集的坐标进行过滤
+
+				//	如果效验的下标小于查询坐标起始位置的下标，表示效验的下标在当前子集的前面，则为正确的效验下标。
+				//	此时返回nil则无需进行过滤
+				if checkIndex < firstStart {
+					// fmt.Println("3: ", firstIndex, result)
+					break
+				} else if checkIndex > firstStart && checkIndex < firestEnd {
+					result = append(result, []int{firstStart, firestEnd}) // TODO 考虑这句是否是放置这里。
+					// fmt.Println("4: ", firstIndex, result)
+					break
+				} else {
+
+					result = append(result, []int{firstStart, firestEnd})
+					// fmt.Println("5: ", firstIndex, result)
+					// 继续寻找过滤其他子集
+					/*
+						{
+							// 这里的注释标识第一个过滤的子集这里找不到大括号(需要记录)
+							// 这里是第二个子集也找不到(需要记录，否则在使用BytesToIndex过滤时就只过滤下面一行的坐标)
+							"} 大括号在这里，需要讲此双引号的坐标过滤，而BytesToIndex可能会找到此括号进行配对"
+
+						}(这个是正确的大括号)
+					*/
+
+					// 记录此次的子集，因为这也是个正确的过滤集
+					newFirstIndex := firstNest.BytesToIndex(firestEnd, src, nil)
+					if 2 != len(newFirstIndex) {
+						break
+					}
+
+					firstStart = newFirstIndex[0]
+					firestEnd = newFirstIndex[1]
+					// fmt.Println("5_1: ", newFirstIndex, result)
+				}
+			}
+		}
+
+	}
+
+	return result
 }
 
 /**

@@ -92,3 +92,103 @@ package main2
 		t.Log(string(testStr[index[0]:index[1]]))
 	}
 }
+
+func TestGetOutBetweens(t *testing.T) {
+	/*
+		temp := "temp// //"
+		{
+		  1
+		  // 1.1 {{}{}{}{{{}}}}
+		  // 1.2 }}}}}{{}{}{}}}}}
+		  {
+		  	1.3
+		  	{
+		  		1.3.1
+		  	}
+		  }
+		  // 1.4 }{{}}
+		  1.5
+		  // 1.6
+		  // 1.7 {
+		}
+		"2"
+		//  temp
+		'
+		  {
+		  	"123"
+			// ' temp '
+		  }
+		'
+	*/
+
+	// /* temp */
+
+	/*
+		{
+			{
+				1
+			}
+		    { 1.0 }
+		    "1.1"
+		    "1.11"
+			// 1.3
+		    // 2  {
+		    // 3  {
+		}
+
+		' // 4'  temp
+		' 5'
+
+		' const Temp6 = "6" '
+
+		// const Temp7 = "7"
+	*/
+
+	srcData := []byte(`
+temp := "temp// //"
+{
+  1
+  // 1.1 {{}{}{}{{{}}}}
+  // 1.2 }}}}}{{}{}{}}}}}
+  {
+  	1.3
+  	{
+  		1.3.1
+  	}
+  }
+  // 1.4 }{{}}
+  1.5
+  // 1.6
+  // 1.7 {
+}
+"2"
+//  temp
+'
+  {
+  	"123"
+	// temp 
+  }
+'
+`)
+
+	SNBetweens := []*SubNest{
+		NewSubNest([]byte("/*"), []byte("*/")),
+		NewSubNotNest([]byte("//"), []byte("\n")),
+		NewSubNest([]byte(`"`), []byte(`"`)),
+		NewSubNest([]byte(`'`), []byte(`'`)),
+		NewSubNest([]byte("`"), []byte("`")),
+		NewSubNest([]byte("{"), []byte("}")),
+	}
+	result := GetOutBetweens(srcData, SNBetweens...)
+
+	for i := 0; i < len(result); i++ {
+		temp := result[i]
+		t.Log(string(srcData[temp[0]:temp[1]]))
+	}
+
+	if 5 != len(result) {
+		t.Fatal(len(result))
+		return
+	}
+
+}
