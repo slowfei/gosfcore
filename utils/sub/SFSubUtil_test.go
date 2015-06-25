@@ -116,7 +116,7 @@ func TestGetOutBetweens(t *testing.T) {
 		'
 		  {
 		  	"123"
-			// ' temp '
+			// temp
 		  }
 		'
 	*/
@@ -125,6 +125,13 @@ func TestGetOutBetweens(t *testing.T) {
 
 	/*
 		{
+		    "1"
+		    '1.1'
+		    {
+		    2
+		    } // {
+		}
+		{
 			{
 				1
 			}
@@ -132,15 +139,12 @@ func TestGetOutBetweens(t *testing.T) {
 		    "1.1"
 		    "1.11"
 			// 1.3
-		    // 2  {
+		    // 2 '{'
 		    // 3  {
 		}
-
 		' // 4'  temp
 		' 5'
-
 		' const Temp6 = "6" '
-
 		// const Temp7 = "7"
 	*/
 
@@ -166,9 +170,39 @@ temp := "temp// //"
 '
   {
   	"123"
-	// temp 
+	// temp
   }
 '
+{
+    "/*"
+    "//"
+}
+{
+	"1"
+    // {
+}
+{
+    "1"
+    '1.1'
+    {
+    2
+    } // {
+}
+{
+	{
+		1
+	}
+    { 1.0 }
+    "1.1"
+    "1.11"
+	// 1.3
+    // 2 '{'
+    // 3  {
+}
+' // 4'  temp
+' 5'
+' const Temp6 = "6" '
+// const Temp7 = "7"
 `)
 
 	SNBetweens := []*SubNest{
@@ -186,7 +220,7 @@ temp := "temp// //"
 		t.Log(string(srcData[temp[0]:temp[1]]))
 	}
 
-	if 5 != len(result) {
+	if 13 != len(result) {
 		t.Fatal(len(result))
 		return
 	}

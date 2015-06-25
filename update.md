@@ -1,6 +1,10 @@
 gosfcore update log
 =============
 
+2015-06-25
+1. src/github.com/slowfei/gosfcore/utils/sub/SFSubUtil.go
+> * 修正：GetOutBetweens(...)修正一个出现的bug。
+
 2015-06-12
 1. src/github.com/slowfei/gosfcore/utils/sub/SFSubUtil.go
 > * 增加：增加排除坐标的算法函数GetOutBetweens(...)...

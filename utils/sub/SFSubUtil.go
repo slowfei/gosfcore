@@ -3,7 +3,7 @@
 //  Copyright (c) 2014 slowfei
 //
 //  Create on 2014-12-16
-//  Update on 2015-06-09
+//  Update on 2015-06-25
 //  Email  slowfei(#)foxmail.com
 //  Home   http://www.slowfei.com
 
@@ -297,10 +297,10 @@ func GetOutBetweens(src []byte, nests ...*SubNest) [][]int {
 			checkIndex += newSrcIndex
 
 			for {
-				// fmt.Println("TODO:", checkIndex, filterNestIndex)
+				// fmt.Println("TODO:", checkIndex, tempFirstPoint, filterNestIndex)
 				checkBetweens := obCheckFilter(src, tempFirstPoint, checkIndex, nests, filterNestIndex)
 				outLen := len(checkBetweens)
-				// fmt.Println("TODO2:", checkBetweens)
+				// fmt.Println("TODO2:", checkBetweens, outBetweens)
 
 				if 0 != outLen {
 					// 记录效验获取的过滤参数最后一位的结尾数，避免是相同的过滤参数出现无限循环
@@ -318,6 +318,7 @@ func GetOutBetweens(src []byte, nests ...*SubNest) [][]int {
 					// 如果效验的index小于过滤的内容则需要再次验证寻找
 					if 0 == firstIndexLen && outEndIndex < checkIndex {
 						tempFirstPoint = outEndIndex
+						// fmt.Println("TODO3:", tempFirstPoint)
 						continue
 					}
 				}
@@ -326,9 +327,18 @@ func GetOutBetweens(src []byte, nests ...*SubNest) [][]int {
 					// 如果出现多个嵌套符号，则需要继续验证下一个判断符，直到找到为止。如果格式错误会造成很大的资源浪费。
 					sliceIndex := checkIndex + startLen
 					nextCheckIndex := bytes.Index(src[sliceIndex:], firstNest.start)
+
+					// fmt.Println("TODO4:", sliceIndex, nextCheckIndex, string(firstNest.start))
 					if -1 != nextCheckIndex {
 						checkIndex = nextCheckIndex + sliceIndex
-						tempFirstPoint = sliceIndex
+
+						tempOutLen := len(outBetweens)
+						if 0 != tempOutLen {
+							// 获取最后一位的坐标作为下一个检测的节点开始
+							tempFirstPoint = outBetweens[tempOutLen-1][1]
+						} else {
+							tempFirstPoint = sliceIndex
+						}
 						continue
 					}
 				}
@@ -343,6 +353,7 @@ func GetOutBetweens(src []byte, nests ...*SubNest) [][]int {
 			firestEnd := firstIndex[1]
 			checkStart := firstStart
 			tempOutEnd := -1
+			nestEndLen := len(firstNest.end)
 			var outBetweens [][]int = nil
 
 			// 如果开始符号和结尾符号是相同的就直接添加，主要是相同的，嵌套的时候会判断转义符，会很少出现错误的验证。
@@ -359,17 +370,17 @@ func GetOutBetweens(src []byte, nests ...*SubNest) [][]int {
 					break
 				}
 
-				// fmt.Println("temp_0:", firstStart, firestEnd)
-				checkBetweens := obCheckFilter(src, checkStart, firestEnd, nests, filterNestIndex)
+				// fmt.Println("temp_0:", checkStart, firstStart, firestEnd-nestEndLen, string(src[firestEnd-nestEndLen]))
+				checkBetweens := obCheckFilter(src, checkStart, firestEnd-nestEndLen, nests, filterNestIndex)
 				outLen := len(checkBetweens)
-
+				// fmt.Println("temp_0_0:", checkBetweens)
 				// 如果存在过滤项则需要再次寻找
 				if 0 != outLen {
 					outBetweens = append(outBetweens, checkBetweens...)
 					// 记录效验获取的过滤参数最后一位的结尾数，避免是相同的过滤参数出现无限循环
 					outEnd := checkBetweens[outLen-1][1]
 
-					// fmt.Println("temp_1:", outBetweens, firstStart, firestEnd)
+					// fmt.Println("temp_1:", outBetweens, firstStart, firestEnd, srcIndex)
 					newFirstIndex := firstNest.BytesToIndex(srcIndex, src, outBetweens)
 					if 2 != len(newFirstIndex) {
 						if outEnd == tempOutEnd {
@@ -381,7 +392,8 @@ func GetOutBetweens(src []byte, nests ...*SubNest) [][]int {
 							break
 						}
 
-						firestEnd = ti + outEnd
+						// 由于在BytesToIndex操作时结尾会加上len(firstNest.end)的字符长度，所以现在在使用Index查找的时候需要加上。
+						firestEnd = ti + outEnd + nestEndLen
 						checkStart = outEnd
 					} else {
 						firestEnd = newFirstIndex[1]
@@ -390,10 +402,21 @@ func GetOutBetweens(src []byte, nests ...*SubNest) [][]int {
 
 					tempOutEnd = outEnd
 
-					// fmt.Println("temp_2:", outBetweens, firstStart, firestEnd)
+					// fmt.Println("temp_2:", outBetweens, newFirstIndex, firstStart, firestEnd)
 				} else {
-					result = append(result, []int{firstStart, firestEnd})
-					break
+					// fmt.Println("temp_3:", result, firstStart, firestEnd)
+					// 结尾不相等的情况下，则再次寻找下一个(firstNest.start)，可能是由于过滤时出现异常。
+					if bytes.Equal(src[firestEnd-nestEndLen:firestEnd], firstNest.end) {
+						result = append(result, []int{firstStart, firestEnd})
+						break
+					} else {
+						ti := bytes.Index(src[firestEnd:], firstNest.start)
+						if -1 == ti {
+							break
+						}
+						firestEnd = firestEnd + ti + nestEndLen
+					}
+
 				}
 			} // ene for {
 
@@ -416,7 +439,6 @@ func GetOutBetweens(src []byte, nests ...*SubNest) [][]int {
  *	@param `checkIndex` 需要效验的源数据下标
  *	@param `otherNests`
  *	@param `filterIndex`
- *	@param `exceedAdd` 超出效验范围时，是否添加最后过滤项
  *	@return `[][]int` OutBetweens 子集的所有过滤项
  */
 func obCheckFilter(src []byte, srcIndex, checkIndex int, otherNests []*SubNest, filterIndex []int) [][]int {
@@ -465,7 +487,6 @@ func obCheckFilter(src []byte, srcIndex, checkIndex int, otherNests []*SubNest, 
 		// fmt.Println("-0.0:", result, firstIndex, checkIndex)
 
 		newSrcIndex := tempFirstPoint + len(firstNest.start)
-
 		ti := bytes.Index(src[newSrcIndex:], firstNest.start)
 		if -1 == ti {
 			return nil
@@ -483,9 +504,17 @@ func obCheckFilter(src []byte, srcIndex, checkIndex int, otherNests []*SubNest, 
 	// fmt.Println("-0:", result, firstIndex, checkIndex)
 	if 2 == len(firstIndex) {
 
+		var tempBetweens [][]int = nil
 		firstStart := firstIndex[0]
 		firestEnd := firstIndex[1]
 		// fmt.Println("0: ", firstIndex)
+
+		// 如果开始符号和结尾符号是相同的就直接添加，主要是相同的，嵌套的时候会判断转义符，会很少出现错误的验证。
+		isSame := bytes.Equal(firstNest.start, firstNest.end)
+		if isSame {
+			result = append(result, []int{firstStart, firestEnd})
+			return result
+		}
 
 		tempi := 0
 		for {
@@ -502,28 +531,30 @@ func obCheckFilter(src []byte, srcIndex, checkIndex int, otherNests []*SubNest, 
 
 			// fmt.Println("1: ", firstIndex, firstStart, firestEnd, filterIndex)
 			// 效验子集的结尾下标是否又是被过滤的，所以进行递归查询
-			outBetweens := obCheckFilter(src, firstStart, firestEnd, otherNests, filterIndex)
+			outBetweens := obCheckFilter(src, firstStart, firestEnd-len(firstNest.end), otherNests, filterIndex)
 			outBetweensLen := len(outBetweens)
 			// 由于更改了该方法的放回参数，所以下面可能需要重构。
-			// fmt.Println("2: ", firstIndex, outBetweens, len(outBetweens), result)
+			// fmt.Println("2: ", firstIndex, outBetweens, len(outBetweens), result, tempBetweens)
 			// 效验无过滤时，则表示当前firstNest查找的结尾标识正确的，所以此时就需要判断是否效验下标是否在其范围内。
 			if 0 != outBetweensLen {
 
 				// 比较结尾的结果是否相同，如果相同则跳过，否则会出现无限循环
-				resultLen := len(result)
+				resultLen := len(tempBetweens)
 				if 0 != resultLen {
-					resultEnd := result[resultLen-1]
+					resultEnd := tempBetweens[resultLen-1]
 					outBetweenEnd := outBetweens[outBetweensLen-1]
 					if resultEnd[0] == outBetweenEnd[0] && resultEnd[1] == outBetweenEnd[1] {
+						result = append(result, []int{firstStart, firestEnd})
 						break
 					}
 				}
 
 				// 被过滤继续查找正确的子集
-				result = append(result, outBetweens...)
-				// fmt.Println("2_1: ", firstIndex, result)
-				newFirstIndex := firstNest.BytesToIndex(firstStart, src, result)
+				tempBetweens = append(tempBetweens, outBetweens...)
+				// fmt.Println("2_1: ", firstIndex, result, tempBetweens)
+				newFirstIndex := firstNest.BytesToIndex(firstStart, src, tempBetweens)
 				if 2 != len(newFirstIndex) {
+					result = append(result, []int{firstStart, firestEnd})
 					break
 				}
 				firestEnd = newFirstIndex[1]
@@ -537,7 +568,7 @@ func obCheckFilter(src []byte, srcIndex, checkIndex int, otherNests []*SubNest, 
 					// fmt.Println("3: ", firstIndex, result)
 					break
 				} else if checkIndex > firstStart && checkIndex < firestEnd {
-					result = append(result, []int{firstStart, firestEnd}) // TODO 考虑这句是否是放置这里。
+					result = append(result, []int{firstStart, firestEnd})
 					// fmt.Println("4: ", firstIndex, result)
 					break
 				} else {
