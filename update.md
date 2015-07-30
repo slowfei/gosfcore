@@ -1,6 +1,10 @@
 gosfcore update log
 =============
 
+2015-07-31
+1. src/github.com/slowfei/gosfcore/encoding/json/SFJson.go
+> * 完善：增加struct tag 命名的支持 `json:"keyName"`
+
 2015-06-25
 1. src/github.com/slowfei/gosfcore/utils/sub/SFSubUtil.go
 > * 修正：GetOutBetweens(...)修正一个出现的bug。

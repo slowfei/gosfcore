@@ -3,8 +3,8 @@
 //  Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-08-25
-//  Update on 2014-09-25
-//  Email  slowfei@foxmail.com
+//  Update on 2015-07-31
+//  Email  slowfei@nnyxing.com
 //  Home   http://www.slowfei.com
 
 //  json 组件封装，基于encoding/json
@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	// "github.com/slowfei/gosfcore/debug"
 	"github.com/slowfei/gosfcore/utils/filemanager"
 	"github.com/slowfei/gosfcore/utils/reflect"
 	"github.com/slowfei/gosfcore/utils/strings"
@@ -303,7 +304,12 @@ func marshal(v reflect.Value, nullTag, boolTag string, buf *bytes.Buffer) error 
 			} else {
 				buf.WriteByte(',')
 			}
-			buf.WriteString("\"" + childFieldT.Name + "\"")
+
+			keyName := childFieldT.Tag.Get("json")
+			if 0 == len(keyName) {
+				keyName = childFieldT.Name
+			}
+			buf.WriteString("\"" + keyName + "\"")
 			buf.WriteByte(':')
 			marshal(childFieldV, nullTag, boolTag, buf)
 		}
