@@ -3,7 +3,7 @@
 //  Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-08-25
-//  Update on 2015-07-31
+//  Update on 2015-08-01
 //  Email  slowfei@nnyxing.com
 //  Home   http://www.slowfei.com
 
@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"errors"
 	// "github.com/slowfei/gosfcore/debug"
+	"encoding/base64"
 	"github.com/slowfei/gosfcore/utils/filemanager"
 	"github.com/slowfei/gosfcore/utils/reflect"
 	"github.com/slowfei/gosfcore/utils/strings"
@@ -22,6 +23,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 var (
@@ -42,6 +44,8 @@ var (
 	TypeNotnilString = DataTypeNotnil(4)
 	TypeNotnilArray  = DataTypeNotnil(5)
 	TypeNotnilMap    = DataTypeNotnil(6)
+
+	hex = "0123456789abcdef"
 )
 
 /**
@@ -270,11 +274,12 @@ func marshal(v reflect.Value, nullTag, boolTag string, buf *bytes.Buffer) error 
 		b := strconv.AppendFloat(scratch[:0], f, 'g', -1, v.Type().Bits())
 		buf.Write(b)
 	case reflect.String:
-		str := v.String()
-		if "" == str {
+		if 0 == v.Len() {
 			buf.WriteString("\"\"")
 		} else {
-			buf.WriteString("\"" + str + "\"")
+			buf.WriteByte('"')
+			_, err = escapeString(buf, v.String())
+			buf.WriteByte('"')
 		}
 
 	case reflect.Struct:
@@ -354,22 +359,42 @@ func marshal(v reflect.Value, nullTag, boolTag string, buf *bytes.Buffer) error 
 			}
 			break
 		}
-		buf.WriteByte('[')
-		first := true
-		count := v.Len()
-		for i := 0; i < count; i++ {
-			v2 := v.Index(i)
-			if "" == nullTag && SFReflectUtil.IsNullValue(v2) {
-				continue
-			}
-			if first {
-				first = false
+		if v.Type().Elem().Kind() == reflect.Uint8 {
+
+			s := v.Bytes()
+			buf.WriteByte('"')
+			if len(s) < 1024 {
+				// for small buffers, using Encode directly is much faster.
+				dst := make([]byte, base64.StdEncoding.EncodedLen(len(s)))
+				base64.StdEncoding.Encode(dst, s)
+				buf.Write(dst)
 			} else {
-				buf.WriteByte(',')
+				// for large buffers, avoid unnecessary extra temporary
+				// buffer space.
+				enc := base64.NewEncoder(base64.StdEncoding, buf)
+				enc.Write(s)
+				enc.Close()
 			}
-			marshal(v2, nullTag, boolTag, buf)
+			buf.WriteByte('"')
+
+		} else {
+			buf.WriteByte('[')
+			first := true
+			count := v.Len()
+			for i := 0; i < count; i++ {
+				v2 := v.Index(i)
+				if "" == nullTag && SFReflectUtil.IsNullValue(v2) {
+					continue
+				}
+				if first {
+					first = false
+				} else {
+					buf.WriteByte(',')
+				}
+				marshal(v2, nullTag, boolTag, buf)
+			}
+			buf.WriteByte(']')
 		}
-		buf.WriteByte(']')
 	case reflect.Interface, reflect.Ptr:
 		if v.IsNil() {
 			if "" != nullTag {
@@ -382,6 +407,164 @@ func marshal(v reflect.Value, nullTag, boolTag string, buf *bytes.Buffer) error 
 	}
 
 	return err
+}
+
+/**
+ *	escape html encoded src with <, >, &, U+2028 and U+2029
+ *	bytes
+ */
+func escapeBytes(dst *bytes.Buffer, s []byte) (int, error) {
+	len0 := dst.Len()
+
+	start := 0
+	for i := 0; i < len(s); {
+		if b := s[i]; b < utf8.RuneSelf {
+			if 0x20 <= b && b != '\\' && b != '"' && b != '<' && b != '>' && b != '&' {
+				i++
+				continue
+			}
+			if start < i {
+				dst.Write(s[start:i])
+			}
+			switch b {
+			case '\\', '"':
+				dst.WriteByte('\\')
+				dst.WriteByte(b)
+			case '\n':
+				dst.WriteByte('\\')
+				dst.WriteByte('n')
+			case '\r':
+				dst.WriteByte('\\')
+				dst.WriteByte('r')
+			case '\t':
+				dst.WriteByte('\\')
+				dst.WriteByte('t')
+			default:
+				// This encodes bytes < 0x20 except for \n and \r,
+				// as well as <, >, and &. The latter are escaped because they
+				// can lead to security holes when user-controlled strings
+				// are rendered into JSON and served to some browsers.
+				dst.WriteString(`\u00`)
+				dst.WriteByte(hex[b>>4])
+				dst.WriteByte(hex[b&0xF])
+			}
+			i++
+			start = i
+			continue
+		}
+		c, size := utf8.DecodeRune(s[i:])
+		if c == utf8.RuneError && size == 1 {
+			if start < i {
+				dst.Write(s[start:i])
+			}
+			dst.WriteString(`\ufffd`)
+			i += size
+			start = i
+			continue
+		}
+		// U+2028 is LINE SEPARATOR.
+		// U+2029 is PARAGRAPH SEPARATOR.
+		// They are both technically valid characters in JSON strings,
+		// but don't work in JSONP, which has to be evaluated as JavaScript,
+		// and can lead to security holes there. It is valid JSON to
+		// escape them, so we do so unconditionally.
+		// See http://timelessrepo.com/json-isnt-a-javascript-subset for discussion.
+		if c == '\u2028' || c == '\u2029' {
+			if start < i {
+				dst.Write(s[start:i])
+			}
+			dst.WriteString(`\u202`)
+			dst.WriteByte(hex[c&0xF])
+			i += size
+			start = i
+			continue
+		}
+		i += size
+	}
+	if start < len(s) {
+		dst.Write(s[start:])
+	}
+
+	return dst.Len() - len0, nil
+}
+
+/**
+ *	escape html encoded src with <, >, &, U+2028 and U+2029
+ *	string
+ */
+func escapeString(dst *bytes.Buffer, str string) (int, error) {
+	len0 := dst.Len()
+
+	start := 0
+	for i := 0; i < len(str); {
+		if b := str[i]; b < utf8.RuneSelf {
+			if 0x20 <= b && b != '\\' && b != '"' && b != '<' && b != '>' && b != '&' {
+				i++
+				continue
+			}
+			if start < i {
+				dst.WriteString(str[start:i])
+			}
+			switch b {
+			case '\\', '"':
+				dst.WriteByte('\\')
+				dst.WriteByte(b)
+			case '\n':
+				dst.WriteByte('\\')
+				dst.WriteByte('n')
+			case '\r':
+				dst.WriteByte('\\')
+				dst.WriteByte('r')
+			case '\t':
+				dst.WriteByte('\\')
+				dst.WriteByte('t')
+			default:
+				// This encodes bytes < 0x20 except for \n and \r,
+				// as well as <, > and &. The latter are escaped because they
+				// can lead to security holes when user-controlled strings
+				// are rendered into JSON and served to some browsers.
+				dst.WriteString(`\u00`)
+				dst.WriteByte(hex[b>>4])
+				dst.WriteByte(hex[b&0xF])
+			}
+			i++
+			start = i
+			continue
+		}
+		c, size := utf8.DecodeRuneInString(str[i:])
+		if c == utf8.RuneError && size == 1 {
+			if start < i {
+				dst.WriteString(str[start:i])
+			}
+			dst.WriteString(`\ufffd`)
+			i += size
+			start = i
+			continue
+		}
+		// U+2028 is LINE SEPARATOR.
+		// U+2029 is PARAGRAPH SEPARATOR.
+		// They are both technically valid characters in JSON strings,
+		// but don't work in JSONP, which has to be evaluated as JavaScript,
+		// and can lead to security holes there. It is valid JSON to
+		// escape them, so we do so unconditionally.
+		// See http://timelessrepo.com/json-isnt-a-javascript-subset for discussion.
+		if c == '\u2028' || c == '\u2029' {
+			if start < i {
+				dst.WriteString(str[start:i])
+			}
+			dst.WriteString(`\u202`)
+			dst.WriteByte(hex[c&0xF])
+			i += size
+			start = i
+			continue
+		}
+		i += size
+	}
+	if start < len(str) {
+		dst.WriteString(str[start:])
+	}
+
+	return dst.Len() - len0, nil
 }
 
 /**
