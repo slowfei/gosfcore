@@ -3,7 +3,7 @@
 //  Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-08-25
-//  Update on 2015-08-01
+//  Update on 2015-09-13
 //  Email  slowfei@nnyxing.com
 //  Home   http://www.slowfei.com
 
@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"errors"
 	// "github.com/slowfei/gosfcore/debug"
+	"encoding"
 	"encoding/base64"
 	"github.com/slowfei/gosfcore/utils/filemanager"
 	"github.com/slowfei/gosfcore/utils/reflect"
@@ -27,9 +28,6 @@ import (
 )
 
 var (
-	// int uint float buffer
-	scratch [64]byte
-
 	// json data type
 	// TypeInt          = DataType(1) TODO golang json parse no int type
 	TypeFloat  = DataType(2)
@@ -44,8 +42,15 @@ var (
 	TypeNotnilString = DataTypeNotnil(4)
 	TypeNotnilArray  = DataTypeNotnil(5)
 	TypeNotnilMap    = DataTypeNotnil(6)
+)
 
-	hex = "0123456789abcdef"
+// private var
+var (
+	// int uint float buffer
+	scratch [64]byte
+
+	hex               = "0123456789abcdef"
+	textMarshalerType = reflect.TypeOf(new(encoding.TextMarshaler)).Elem()
 )
 
 /**
@@ -293,6 +298,19 @@ func marshal(v reflect.Value, nullTag, boolTag string, buf *bytes.Buffer) error 
 			break
 		}
 
+		if vt.Implements(textMarshalerType) {
+			imt := v.Interface().(encoding.TextMarshaler)
+			mt, e := imt.MarshalText()
+			if nil != e {
+				err = e
+			} else {
+				buf.WriteByte('"')
+				buf.Write(mt)
+				buf.WriteByte('"')
+			}
+			break
+		}
+
 		buf.WriteByte('{')
 		first := true
 
@@ -304,16 +322,19 @@ func marshal(v reflect.Value, nullTag, boolTag string, buf *bytes.Buffer) error 
 				continue
 			}
 
+			keyName := childFieldT.Tag.Get("json")
+			if 0 == len(keyName) {
+				keyName = childFieldT.Name
+			} else if "-" == keyName {
+				continue
+			}
+
 			if first {
 				first = false
 			} else {
 				buf.WriteByte(',')
 			}
 
-			keyName := childFieldT.Tag.Get("json")
-			if 0 == len(keyName) {
-				keyName = childFieldT.Name
-			}
 			buf.WriteString("\"" + keyName + "\"")
 			buf.WriteByte(':')
 			marshal(childFieldV, nullTag, boolTag, buf)

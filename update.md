@@ -1,6 +1,10 @@
 gosfcore update log
 =============
 
+2015-09-13
+1. src/github.com/slowfei/gosfcore/encoding/json/SFJson.go
+> * 修正：时间格式处理的问题
+
 2015-08-03
 1. src/github.com/slowfei/gosfcore/encoding/json/SFJson.go
 > * 修正string对于html编码和转义符的问题，修正对[]byte解析的问题。
