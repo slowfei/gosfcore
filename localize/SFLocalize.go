@@ -1,73 +1,172 @@
-//	本地化语言
-//	TODO 还未实现
+//  Copyright 2016 slowfei And The Contributors All rights reserved.
 //
-//	copyright 2013 slowfei
-//	email		slowfei@foxmail.com
-//	createTime 	2013-8-24
-//	updateTime	2013-8-24
+//  Software Source Code License Agreement (BSD License)
+//
+//  Create on 2013-08-24
+//  Update on 2016-08-04
+//  Email  slowfei@nnyxing.com
+//  Home   http://www.slowfei.com
+
+// 本地化语言
 package SFLocalize
 
 import (
-	"errors"
+	"os"
+	"path"
+	"strings"
 )
 
 const (
-	//	语言标识
-	LOCALIZE_CHINESE    = "zh-CN"
-	LOCALIZE_CHINESE_TW = "zh-TW"
-	LOCALIZE_CHINESE_HK = "zh-HK"
-	LOCALIZE_ENGLISH    = "en-US"
+	// default localize directory name
+	DEFAULT_DIRNAME = "Localize"
+
+	// default localize file name
+	DEFAULT_KEYSTRINGS_NAME = "localize"
+
+	DEFAULT_KEYSTRINGS_FILE_SUFFIX = "keystrings"
+
+	// default language directory name
+	DEFAULT_LANG = "default"
 )
 
-var (
-	//	程序唯一的本地化信息
-	thisLocalize *localize
-)
+/**
+ *	localize interface
+ */
+type ILocalize interface {
+	/**
+	 *	get localize keystrings key on string value
+	 *	specified file localize-[LanguageCode].keystrings
+	 *
+	 *	@param `langCode` language code
+	 *	@param `key` keystrings file key @param `comt` comment be empty @return `code` language code
+	 *	@return `keyVal` key on value
+	 *	@return `isExist` whether find localize info, false is not.
+	 */
+	KeyValue(langCode, key, comt string) (code, keyVal string, isExist bool)
 
+	/**
+	 *	by filepath get localize keystrings key on string value
+	 *
+	 *	@param `langCode` language code
+	 *	@param `key` keystrings file key
+	 *	@param `filename` keystrings file name,suffix is not required
+	 *	@param `comt` comment be empty
+	 *	@return `code` language code
+	 *	@return `keyVal` key on value
+	 *	@return `isExist` whether find localize info, false is not.
+	 */
+	KeyValueByFilename(langCode, key, filename, comt string) (code, keyVal string, isExist bool)
+
+	/**
+	 *	by language code get localize file info
+	 *
+	 *	@param `langCode` language code
+	 *	@param `filepath` relative path
+	 *	@return `fullPath` absolute path
+	 *	@return `fi` file info
+	 */
+	FileInfo(langCode, filepath string) (fullPath string, fi os.FileInfo)
+}
+
+/***2-keystrings文件的使用说明
+ *	keystrings文件是key on value键与值对应的本地化存储文件。
+ *	文件内容：
+ *	key=localize string
+ *	key2=localize value
+ *
+ *	文件命名格式：
+ *	localize.[zh-CN].keystrings (注：localize是默认使用的文件名)
+ *	如需要自定义文件名也可以替换“localize”名称，然后使用LocalizeByFilename(...)函数方法。
+ *
+ *	关于语言代码可以参考语言代码列表
+ */
+
+// localize keys on values type
+type KeyStrings map[string]string
+
+/**
+ *	language struct info, Code is only
+ */
+type Language struct {
+	Code     string                // language code
+	LangName string                // language name
+	Area     string                // use area
+	IsLang   bool                  // language tag
+	KeyFiles map[string]KeyStrings // keystrings files
+}
+
+/**
+ *	ILocalize implement
+ */
 type localize struct {
-	currentLang string
-	langs       map[string]map[string]string
+	TagName   string
+	RootPath  string
+	Languages []Language
 }
 
-func (l *localize) string(key, comment string) string {
-	return key
+/**
+ *	implement ILocalize
+ */
+func (l *localize) KeyValue(langCode, key, comt string) (code, keyVal string, isExist bool) {
+	code, keyVal, isExist = l.KeyValueByFilename(langCode, key, DEFAULT_KEYSTRINGS_NAME, comt)
+	return
 }
 
-//	初始化本地化语言信息
-func InitLocalize() {
-	thisLocalize = &localize{currentLang: LOCALIZE_CHINESE}
+/**
+ *	implement ILocalize
+ */
+func (l *localize) KeyValueByFilename(langCode, key, filename, comt string) (code, keyVal string, isExist bool) {
+
+	var lang Language
+
+	lang, isExist = languageByCode(langCode, l.Languages)
+
+	if isExist {
+		var kfs KeyStrings
+		if kfs, isExist = lang.KeyFiles[filename]; isExist {
+			if keyVal, isExist = kfs[key]; isExist {
+				code = lang.Code
+			} else {
+				keyVal = key
+			}
+		}
+	}
+
+	return
 }
 
-//	切换语言
-func ChangeLang(langTag string) error {
-	//	由于没有具体实现到，所以展示直接设置 TODO
-	thisLocalize.currentLang = langTag
+/**
+ * implement ILocalize
+ */
+func (l *localize) FileInfo(langCode, filepath string) (fullPath string, fi os.FileInfo) {
+	lang, isExist := languageByCode(langCode, l.Languages)
 
-	isSet := false
-	for k, _ := range thisLocalize.langs {
-		if langTag == k {
-			isSet = true
+	if isExist {
+		fullPath = path.Join(l.RootPath, lang.Code, filepath)
+		fi, _ = os.Stat(fullPath)
+	}
+
+	return
+}
+
+/**
+ *	find language by language code
+ */
+func languageByCode(langCode string, languages []Language) (Language, bool) {
+	var lang Language
+	isExist := false
+
+	for i := 0; i < len(languages); i++ {
+		tempLang := languages[i]
+
+		// TODO 需要考虑语言的判断，就是zh-Hans\zh-Hans-HK，存在先后存续的判断
+
+		if 0 <= strings.Index(langCode, tempLang.Code) {
+			isExist = true
+			lang = tempLang
 			break
 		}
 	}
 
-	if isSet {
-		thisLocalize.currentLang = langTag
-		return nil
-	} else {
-		return errors.New("can not find:" + langTag)
-	}
-
-}
-
-//	获取本地化语言信息
-//	@key		key查询不到相应的本地化信息将直接返回key
-//	@comment	只为了进行注解，没有其他什么作用
-func String(key, comment string) string {
-	return thisLocalize.string(key, comment)
-}
-
-//	获取当前语言标识
-func CurrentLang() string {
-	return thisLocalize.currentLang
+	return lang, isExist
 }
