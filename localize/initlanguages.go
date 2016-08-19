@@ -3,7 +3,7 @@
 //  Software Source Code License Agreement (BSD License)
 //
 //  Create on 2016-07-18
-//  Update on 2016-08-04
+//  Update on 2016-08-19
 //  Email  slowfei@nnyxing.com
 //  Home   http://www.slowfei.com
 
@@ -18,6 +18,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sort"
 	"strings"
 )
 
@@ -93,6 +94,7 @@ func LoadLanguages(tagName, dirPath string) (ILocalize, error) {
 				langStruct.LangName = langName
 				langStruct.Area = langArea
 				local.Languages = append(local.Languages, langStruct)
+				sort.Sort(LanguageToShort(local.Languages))
 			}
 
 		}
@@ -134,8 +136,18 @@ func parseLangDirKeyStrings(dirpath string, mapkey map[string]KeyStrings) {
 		fileNameLen := len(fileName)
 		if !file.IsDir() && strings.HasSuffix(fileName, suffix) {
 			keyFilename := fileName[:fileNameLen-suffixLen]
-			mapkey[keyFilename] = parseKeyStringsFile(path.Join(dirpath, fileName))
+
+			ksv, ok := mapkey[keyFilename]
+			if !ok {
+				ksv = make(KeyStrings)
+			}
+
+			parseKeyStringsFile(path.Join(dirpath, fileName), ksv)
+
+			mapkey[keyFilename] = ksv
+
 		}
+
 	}
 }
 
@@ -158,7 +170,11 @@ func parseLangRootKeyStringsFiles(langCode string, filepaths []string, mapkey ma
 		fileNameLen := len(fileName)
 		if strings.HasSuffix(fileName, suffix) {
 			keyFilename := fileName[:fileNameLen-suffixLen]
-			mapkey[keyFilename] = parseKeyStringsFile(filepath)
+
+			ksv := make(KeyStrings)
+			parseKeyStringsFile(filepath, ksv)
+
+			mapkey[keyFilename] = ksv
 			isAdd = true
 		}
 	}
@@ -168,9 +184,7 @@ func parseLangRootKeyStringsFiles(langCode string, filepaths []string, mapkey ma
 /**
  *	parse .keystrings file key and value
  */
-func parseKeyStringsFile(filepath string) KeyStrings {
-
-	var ksv KeyStrings
+func parseKeyStringsFile(filepath string, ksv KeyStrings) {
 
 	file, err := os.Open(filepath)
 	if nil == err {
@@ -180,18 +194,15 @@ func parseKeyStringsFile(filepath string) KeyStrings {
 			}
 		}()
 
-		ksv = make(KeyStrings)
-
 		br := bufio.NewReader(file)
 		for {
 
-			lineBytes, err := br.ReadBytes('\n')
-
-			if nil != err || io.EOF == err {
+			lineBytes, isPrefix, err := br.ReadLine()
+			if nil != err || io.EOF == err || isPrefix {
 				break
 			}
-			signIndex := bytes.IndexByte(lineBytes, '=')
 
+			signIndex := bytes.IndexByte(lineBytes, '=')
 			if 0 < signIndex {
 				key := string(lineBytes[:signIndex])
 				value := string(lineBytes[signIndex+1:])
@@ -200,8 +211,6 @@ func parseKeyStringsFile(filepath string) KeyStrings {
 
 		}
 	}
-
-	return ksv
 }
 
 /**

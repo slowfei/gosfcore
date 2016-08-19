@@ -3,7 +3,7 @@
 //  Software Source Code License Agreement (BSD License)
 //
 //  Create on 2013-08-24
-//  Update on 2016-08-04
+//  Update on 2016-08-19
 //  Email  slowfei@nnyxing.com
 //  Home   http://www.slowfei.com
 
@@ -96,6 +96,15 @@ type Language struct {
 }
 
 /**
+ *	language struct by Code var short
+ */
+type LanguageToShort []Language
+
+func (lts LanguageToShort) Len() int           { return len(lts) }
+func (lts LanguageToShort) Less(i, j int) bool { return len(lts[i].Code) > len(lts[j].Code) }
+func (lts LanguageToShort) Swap(i, j int)      { lts[i], lts[j] = lts[j], lts[i] }
+
+/**
  *	ILocalize implement
  */
 type localize struct {
@@ -120,7 +129,6 @@ func (l *localize) KeyValueByFilename(langCode, key, filename, comt string) (cod
 	var lang Language
 
 	lang, isExist = languageByCode(langCode, l.Languages)
-
 	if isExist {
 		var kfs KeyStrings
 		if kfs, isExist = lang.KeyFiles[filename]; isExist {
@@ -159,8 +167,7 @@ func languageByCode(langCode string, languages []Language) (Language, bool) {
 	for i := 0; i < len(languages); i++ {
 		tempLang := languages[i]
 
-		// TODO 需要考虑语言的判断，就是zh-Hans\zh-Hans-HK，存在先后存续的判断
-
+		// Language.Code 已经过排序处理，所以不用担心zh-Hant\zh-Hant-HK 先后顺序问题
 		if 0 <= strings.Index(langCode, tempLang.Code) {
 			isExist = true
 			lang = tempLang
