@@ -29,13 +29,31 @@ const (
 	DEFAULT_LANG = "default"
 )
 
+/***1-基本使用说明
+ *	本地化语言目录：
+ *	指定一个目录专门作为本地化语言存放的文件夹，可自定义自己的目录路径。
+ *	例子：
+ *	../project/localize/ (本地化语言目录)
+ *	../project/localize/zh-CN/
+ *	../project/localize/zh-CN/...(files)
+ *	../project/localize/en/
+ *	../project/localize/en/...(files)
+ *	../project/localize/localize.zh-CN.keystrings
+ *	../project/lcoalize/localize.en.keystrings
+ *
+ *	初始化一个本地化对象：
+ *	每个项目独立的一个本地化对象，可单独加载本地化语言目录，设计时需要考虑调用者的操作即可。
+ *	调用LoadLanguages(tagName, dirPath string) (ILocalize, error)函数，返回ILocalize接口，具体可查看接口函数说明。
+ *
+ */
+
 /**
  *	localize interface
  */
 type ILocalize interface {
 	/**
 	 *	get localize keystrings key on string value
-	 *	specified file localize-[LanguageCode].keystrings
+	 *	specified file localize.[LanguageCode].keystrings
 	 *
 	 *	@param `langCode` language code
 	 *	@param `key` keystrings file key @param `comt` comment be empty @return `code` language code
@@ -78,6 +96,14 @@ type ILocalize interface {
  *	localize.[zh-CN].keystrings (注：localize是默认使用的文件名)
  *	如需要自定义文件名也可以替换“localize”名称，然后使用LocalizeByFilename(...)函数方法。
  *
+ *	目录说明：
+ *	入放置在本地话语言目录根目录则需要添加“[zh-CN]”语言代码标识。
+ *	例子：(..=本地化语言加载目录)
+ *		../zh-CN/localize.keystrings (放置在语言代码目录不需要编写语言代码标识)
+ *		../en/ (英语的代码标识文件夹)
+ *		../localize.zh-CN.keystrings
+ *
+ *
  *	关于语言代码可以参考语言代码列表
  */
 
@@ -85,7 +111,7 @@ type ILocalize interface {
 type KeyStrings map[string]string
 
 /**
- *	language struct info, Code is only
+ *	language struct info, code is only
  */
 type Language struct {
 	Code     string                // language code
