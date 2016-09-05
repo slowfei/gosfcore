@@ -80,7 +80,7 @@ func TestFilepath(t *testing.T) {
 	testCode := "zh-Hans"
 	testfname := "index.html"
 
-	full, fi := loc.FileInfo(testCode, testfname)
+	code, full, fi := loc.FileInfo(testCode, testfname)
 
 	if nil == fi {
 		t.Fatal("get file fatal: test file name is", testfname)
@@ -90,6 +90,41 @@ func TestFilepath(t *testing.T) {
 		t.Fatal("testfname != return file name.", "return file name=", fi.Name())
 	}
 
+	if code != testCode {
+		t.Fatal("testCode != code")
+	}
+
 	t.Log(full)
+
+}
+
+/**
+ *	测试多文件的获取
+ */
+func TestFilepaths(t *testing.T) {
+
+	loc, err := LoadLanguages("", _testDataPath)
+
+	if nil != err {
+		t.Error(err.Error())
+		return
+	}
+
+	testfname := "index.html"
+
+	codes, fulls, fis := loc.FileInfos(testfname)
+
+	local := loc.(*localize)
+	if 0 == len(fulls) || len(fulls) != len(local.Languages) {
+		t.Fatal("get file infos fatal, incorrect number.")
+		return
+	}
+
+	if fis[0].Name() != testfname {
+		t.Fatal("testfname != return fils[0].name")
+	}
+	t.Log(len(fulls))
+	t.Log(fulls)
+	t.Log(codes)
 
 }

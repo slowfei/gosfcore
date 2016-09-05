@@ -80,10 +80,21 @@ type ILocalize interface {
 	 *
 	 *	@param `langCode` language code
 	 *	@param `filepath` relative path
+	 *	@return `code`	language code
 	 *	@return `fullPath` absolute path
 	 *	@return `fi` file info
 	 */
-	FileInfo(langCode, filepath string) (fullPath string, fi os.FileInfo)
+	FileInfo(langCode, filepath string) (code, fullPath string, fi os.FileInfo)
+
+	/**
+	 *	by language code get all localize language all file info
+	 *
+	 *	@param `filepath`
+	 *	@return `codes` langugaes code
+	 *	@return `fullPaths`
+	 *	@return `fis`
+	 */
+	FileInfos(filepath string) (codes, fullPaths []string, fis []os.FileInfo)
 }
 
 /***2-keystrings文件的使用说明
@@ -172,14 +183,41 @@ func (l *localize) KeyValueByFilename(langCode, key, filename, comt string) (cod
 /**
  * implement ILocalize
  */
-func (l *localize) FileInfo(langCode, filepath string) (fullPath string, fi os.FileInfo) {
+func (l *localize) FileInfo(langCode, filepath string) (code, fullPath string, fi os.FileInfo) {
 	lang, isExist := languageByCode(langCode, l.Languages)
 
 	if isExist {
 		fullPath = path.Join(l.RootPath, lang.Code, filepath)
 		fi, _ = os.Stat(fullPath)
+		code = lang.Code
 	}
 
+	return
+}
+
+/**
+ * implement ILocalize
+ */
+func (l *localize) FileInfos(filepath string) (codes, fullPaths []string, fis []os.FileInfo) {
+
+	langCount := len(l.Languages)
+	codes = make([]string, 0, langCount)
+	fullPaths = make([]string, 0, langCount)
+	fis = make([]os.FileInfo, 0, langCount)
+
+	for i := 0; i < langCount; i++ {
+		lang := l.Languages[i]
+
+		fullPath := path.Join(l.RootPath, lang.Code, filepath)
+		fi, _ := os.Stat(fullPath)
+		code := lang.Code
+
+		if nil != fi {
+			codes = append(codes, code)
+			fullPaths = append(fullPaths, fullPath)
+			fis = append(fis, fi)
+		}
+	}
 	return
 }
 
