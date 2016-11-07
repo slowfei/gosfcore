@@ -1,6 +1,10 @@
 gosfcore update log
 =============
 
+2016-11-07
+1. src/github.com/slowfei/gosfcore/filepath/textformat
+> * 新增：增加针对文件的操作，textformat（文本格式操作工具）正在编写中...
+
 2015-09-13
 1. src/github.com/slowfei/gosfcore/encoding/json/SFJson.go
 > * 修正：时间格式处理的问题
