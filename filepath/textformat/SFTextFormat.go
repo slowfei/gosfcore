@@ -14,7 +14,7 @@
 
 1. 读取文本键=值格式
 > 针对特定文件格式进行读取，返回map类型，可根据选择进行读取数据的缓存。
->
+> 键值目前支持的分隔符号“=”
 
 */
 
@@ -28,11 +28,78 @@ import (
 	"os"
 )
 
+/**
+ *	read file to key value format
+ *	key value delimiter is "="
+ *
+ *	e.g.: (file.txt)
+ *	key1=value1
+ *	key2=value2
+ *
+ *	@param `fpath` file path
+ *	@param `cache` cache key value
+ *	@return map key value
+ *
+ */
 func RKeyValue(fpath string, cache bool) map[string]string {
-	return nil
+	//TODO 缓存还未编写
+
+	var kvmap map[string]string
+
+	file, err := os.Open(fpath)
+	if nil == err {
+		defer func() {
+			if err := file.Close(); err != nil {
+
+			}
+		}()
+
+		kvmap = make(map[string]string)
+		br := bufio.NewReader(file)
+
+		for {
+
+			lineBytes, isPrefix, err := br.ReadLine()
+			if nil != err || io.EOF == err || isPrefix {
+				break
+			}
+
+			// comments sign check
+			commentsSignIndex := bytes.IndexByte(lineBytes, '#')
+			if 0 == commentsSignIndex {
+				continue
+			}
+
+			signIndex := bytes.IndexByte(lineBytes, '=')
+			if 0 < signIndex {
+				key := string(lineBytes[:signIndex])
+				value := string(lineBytes[signIndex+1:])
+
+				if 0 != len(key) {
+					kvmap[key] = value
+				}
+			}
+
+		}
+	}
+
+	return kvmap
 }
 
-func RKeyValuBlock(fpath string, block func(key, value string) bool) {
+/**
+ *	read file to key value format
+ *	key value delimiter is "="
+ *
+ *	e.g.: (file.txt)
+ *	key1=value1
+ *	key2=value2
+ *
+ *	@param `fpath` file path
+ *	@param `cache` cache read file
+ *	@param `block` func(key,value string) bool
+ *
+ */
+func RKeyValueBlock(fpath string, cache bool, block func(key, value string) bool) {
 	file, err := os.Open(fpath)
 	if nil == err {
 		defer func() {
@@ -47,6 +114,12 @@ func RKeyValuBlock(fpath string, block func(key, value string) bool) {
 			lineBytes, isPrefix, err := br.ReadLine()
 			if nil != err || io.EOF == err || isPrefix {
 				break
+			}
+
+			// comments sign check
+			commentsSignIndex := bytes.IndexByte(lineBytes, '#')
+			if 0 == commentsSignIndex {
+				continue
 			}
 
 			signIndex := bytes.IndexByte(lineBytes, '=')

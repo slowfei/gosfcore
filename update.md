@@ -1,6 +1,14 @@
 gosfcore update log
 =============
 
+2017-01-24
+1. src/github.com/slowfei/gosfcore/filepath/textformat
+> * SFTextFormat 测试RKeyValue、RKeyValuBlock完成
+
+2017-01-04
+1. src/github.com/slowfei/gosfcore/filepath/textformat
+> * 初步完成SFTextFormat 读取键值编写，已经编写两个函数RKeyValue、RKeyValuBlock
+
 2016-11-07
 1. src/github.com/slowfei/gosfcore/filepath/textformat
 > * 新增：增加针对文件的操作，textformat（文本格式操作工具）正在编写中...
