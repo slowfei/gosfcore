@@ -27,10 +27,20 @@ var (
 )
 
 /**
- *	load language directory info
+ *	localize directory path
  */
-func LoadLanguages(tagName, dirPath string) (ILocalize, error) {
+type LocDir string
 
+/**
+ *	load language directory info
+ *
+ *	@param `tagName` localize tag
+ *	@param `locdir` localize directory path
+ *	@return `ILocalize`
+ *	@return `error`
+ */
+func LoadLanguages(tagName string, locdir LocDir) (ILocalize, error) {
+	var dirPath string = string(locdir)
 	// check directory
 	fidir, err := os.Stat(dirPath)
 	if nil != err {

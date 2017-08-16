@@ -87,14 +87,22 @@ type ILocalize interface {
 	FileInfo(langCode, filepath string) (code, fullPath string, fi os.FileInfo)
 
 	/**
-	 *	by language code get all localize language all file info
+	 *	by filepath get all localize language all file info
 	 *
-	 *	@param `filepath`
+	 *	@param `filepath` relative path
 	 *	@return `codes` langugaes code
 	 *	@return `fullPaths`
 	 *	@return `fis`
 	 */
 	FileInfos(filepath string) (codes, fullPaths []string, fis []os.FileInfo)
+
+	/**
+	 *	by filepath get all localize language all file info
+	 *
+	 *	@param `filepath` relative path
+	 *	@param `fn` func block return code\fullpath\fileinfo
+	 */
+	FileInfosFunc(filepath string, fn func(code, fullPath string, fi os.FileInfo))
 }
 
 /***2-keystrings文件的使用说明
@@ -219,6 +227,30 @@ func (l *localize) FileInfos(filepath string) (codes, fullPaths []string, fis []
 		}
 	}
 	return
+}
+
+/**
+ *	implement ILocalize
+ */
+func (l *localize) FileInfosFunc(filepath string, fn func(code, fullPath string, fi os.FileInfo)) {
+
+	if nil == fn {
+		return
+	}
+
+	langCount := len(l.Languages)
+
+	for i := 0; i < langCount; i++ {
+		lang := l.Languages[i]
+
+		fullPath := path.Join(l.RootPath, lang.Code, filepath)
+		fi, _ := os.Stat(fullPath)
+		code := lang.Code
+
+		if nil != fi {
+			fn(code, fullPath, fi)
+		}
+	}
 }
 
 /**

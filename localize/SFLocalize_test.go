@@ -2,6 +2,7 @@ package SFLocalize
 
 import (
 	"github.com/slowfei/gosfcore/utils/filemanager"
+	"os"
 	"path"
 	"testing"
 )
@@ -126,5 +127,33 @@ func TestFilepaths(t *testing.T) {
 	t.Log(len(fulls))
 	t.Log(fulls)
 	t.Log(codes)
+
+}
+
+/**
+ *	测试多文件获取本地化信息回调函数
+ */
+func TestFilepathsFunc(t *testing.T) {
+
+	loc, err := LoadLanguages("", _testDataPath)
+
+	if nil != err {
+		t.Error(err.Error())
+		return
+	}
+
+	isCheck := false
+	testfname := "index.html"
+
+	loc.FileInfosFunc(testfname, func(code, full string, fi os.FileInfo) {
+		isCheck = true
+		if fi.Name() != testfname {
+			t.Fatal("testfname != ", fi.Name())
+		}
+	})
+
+	if !isCheck {
+		t.Fatal(testfname, " find nil")
+	}
 
 }
